@@ -1,0 +1,2418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ParseOne · 智能文档解析平台 — 让每一份文档都成为 AI 可计算的数据资产</title>
+<meta name="description" content="ParseOne 是企业文档进入 AI 与业务系统前的标准处理层：解析、结构化、转换、切片、回溯。支持复杂表格还原、阅读顺序重建、跨页拼接、图纸与公式多模态解析。">
+<style>
+/* ============ Design Tokens ============ */
+:root{
+  --blue-50:#eef4ff; --blue-100:#dbe7ff; --blue-200:#bcd0ff;
+  --blue-500:#2563eb; --blue-600:#1d4ed8; --blue-700:#1e40af;
+  --cyan:#0891b2; --ink:#0f172a; --ink-2:#334155; --ink-3:#64748b;
+  --line:#e2e8f0; --bg:#f8fafc; --card:#ffffff;
+  --green:#059669; --amber:#d97706; --red:#dc2626;
+  --radius:14px; --radius-lg:20px;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.08);
+  --shadow-md:0 4px 14px rgba(15,23,42,.08),0 2px 4px rgba(15,23,42,.05);
+  --shadow-lg:0 18px 50px -12px rgba(29,78,216,.18),0 8px 20px rgba(15,23,42,.06);
+  --font:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"Cascadia Code","JetBrains Mono","Fira Code",Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--blue-200)}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+.container{max-width:1180px;margin:0 auto;padding:0 24px}
+
+/* ============ Nav ============ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(14px);background:rgba(255,255,255,.82);border-bottom:1px solid transparent;transition:.3s}
+.nav.scrolled{border-bottom-color:var(--line);box-shadow:0 1px 12px rgba(15,23,42,.05)}
+.nav-inner{max-width:1180px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:32px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.3px}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--blue-500),var(--cyan));display:grid;place-items:center;color:#fff;font-size:13px;font-weight:900}
+.nav-links{display:flex;gap:26px;font-size:14px;color:var(--ink-2);flex:1}
+.nav-links a{position:relative;padding:6px 0;transition:.2s}
+.nav-links a:hover{color:var(--blue-600)}
+.nav-links a.active{color:var(--blue-600);font-weight:600}
+.nav-links a.active::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;border-radius:2px;background:var(--blue-500)}
+.nav-cta{display:flex;gap:12px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14px;padding:9px 18px;border-radius:10px;transition:.2s}
+.btn-primary{background:var(--blue-600);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.35)}
+.btn-primary:hover{background:var(--blue-700);transform:translateY(-1px)}
+.btn-ghost{color:var(--ink-2);border:1px solid var(--line);background:#fff}
+.btn-ghost:hover{border-color:var(--blue-500);color:var(--blue-600)}
+@media(max-width:900px){.nav-links{display:none}}
+
+/* ============ Hero ============ */
+.hero{position:relative;padding:140px 0 80px;overflow:hidden;background:
+  radial-gradient(1000px 500px at 80% -10%,rgba(37,99,235,.10),transparent 60%),
+  radial-gradient(800px 400px at 5% 20%,rgba(8,145,178,.08),transparent 60%)}
+.hero-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:56px;align-items:center}
+@media(max-width:960px){.hero-grid{grid-template-columns:1fr}}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--blue-600);background:var(--blue-50);border:1px solid var(--blue-100);padding:6px 14px;border-radius:999px;margin-bottom:20px}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--blue-500);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.hero h1{font-size:50px;line-height:1.18;font-weight:800;letter-spacing:-1px}
+.hero h1 .grad{background:linear-gradient(90deg,var(--blue-600),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{margin:22px 0 32px;font-size:17px;color:var(--ink-3);max-width:540px}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap}
+.btn-lg{padding:13px 26px;font-size:15px;border-radius:12px}
+.hero-meta{margin-top:36px;display:flex;gap:28px;color:var(--ink-3);font-size:13px}
+.hero-meta b{display:block;font-size:20px;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* hero visual */
+.hero-visual{position:relative;min-height:460px}
+.doc-card{position:absolute;inset:0;background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);border:1px solid var(--line);overflow:hidden}
+.doc-toolbar{height:40px;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid var(--line);background:#fbfdff}
+.doc-toolbar .dot{width:10px;height:10px;border-radius:50%}
+.doc-body{position:relative;height:calc(100% - 40px);padding:22px 26px}
+.scanline{position:absolute;left:0;right:0;height:64px;top:-70px;background:linear-gradient(180deg,transparent,rgba(37,99,235,.16),transparent);border-bottom:1.5px solid rgba(37,99,235,.55);animation:scan 3.6s cubic-bezier(.45,.05,.35,1) infinite;pointer-events:none}
+@keyframes scan{0%{top:-8%}55%{top:92%}100%{top:100%}}
+.fake-line{height:10px;border-radius:5px;background:#e6edf5;margin-bottom:12px;position:relative}
+.fake-line.hl{background:rgba(37,99,235,.14)}
+.region-box{position:absolute;border:1.5px solid var(--blue-500);border-radius:6px;background:rgba(37,99,235,.07);opacity:0;transition:.5s;pointer-events:none}
+.region-box.show{opacity:1}
+.region-box .tag{position:absolute;top:-22px;left:-2px;font-size:10px;font-weight:700;color:#fff;background:var(--blue-500);padding:2px 7px;border-radius:4px;white-space:nowrap}
+.hero-side{position:absolute;right:-14px;top:44px;width:280px;background:#0f172a;border-radius:14px;box-shadow:var(--shadow-lg);padding:16px 18px;color:#7dd3fc;font-family:var(--mono);font-size:11.5px;line-height:1.8;opacity:0;transform:translateX(24px);animation:slidein .8s .6s forwards;z-index:5}
+@keyframes slidein{to{opacity:1;transform:none}}
+.hero-side .k{color:#93c5fd}.hero-side .s{color:#86efac}.hero-side .c{color:#64748b}
+.chip-float{position:absolute;z-index:6;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow-md);border-radius:10px;padding:8px 14px;font-size:12.5px;font-weight:600;display:flex;gap:8px;align-items:center;animation:float 5s ease-in-out infinite}
+.chip-float .ico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:12px;color:#fff}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+/* ============ Stats strip ============ */
+.stats{border-block:1px solid var(--line);background:#fff}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.stat{padding:30px 24px;text-align:center;border-right:1px solid var(--line)}
+.stat:last-child{border-right:none}
+.stat b{font-size:34px;font-weight:800;letter-spacing:-1px;background:linear-gradient(90deg,var(--blue-600),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.stat span{display:block;margin-top:4px;font-size:13px;color:var(--ink-3)}
+@media(max-width:760px){.stats-grid{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2){border-right:none}}
+
+/* ============ Sections ============ */
+section{padding:92px 0}
+.sec-head{max-width:720px;margin-bottom:52px}
+.sec-head.center{margin-inline:auto;text-align:center}
+.sec-tag{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:2px;color:var(--blue-600);text-transform:uppercase;margin-bottom:12px}
+.sec-head h2{font-size:34px;font-weight:800;letter-spacing:-.6px;line-height:1.3}
+.sec-head p{margin-top:14px;color:var(--ink-3);font-size:15.5px}
+
+/* ============ Pipeline ============ */
+.pipeline-wrap{background:linear-gradient(180deg,#f2f7ff,var(--bg))}
+.pipeline{display:grid;grid-template-columns:1fr 2.4fr 1fr;gap:22px;align-items:stretch}
+@media(max-width:960px){.pipeline{grid-template-columns:1fr}}
+.pipe-col{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:22px;box-shadow:var(--shadow-sm)}
+.pipe-col h4{font-size:13px;font-weight:700;color:var(--ink-3);letter-spacing:1px;margin-bottom:16px;text-align:center}
+.pipe-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:13.5px;font-weight:600;background:#fbfdff}
+.pipe-item .ico{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.pipe-core{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;position:relative;background:linear-gradient(145deg,#1e3a8a,#1d4ed8 55%,#2563eb);border-radius:var(--radius-lg);padding:26px 22px;box-shadow:var(--shadow-lg)}
+.pipe-core::before{content:"ParseOne 标准处理层";position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;font-size:12px;font-weight:700;padding:4px 16px;border-radius:999px;letter-spacing:1px}
+@media(max-width:960px){.pipe-core{grid-template-columns:repeat(2,1fr)}}
+.core-step{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(4px);border-radius:12px;padding:16px 12px;text-align:center;color:#fff;transition:.25s}
+.core-step:hover{background:rgba(255,255,255,.2);transform:translateY(-3px)}
+.core-step .big{font-size:22px;margin-bottom:6px}
+.core-step b{display:block;font-size:14.5px;margin-bottom:4px}
+.core-step span{font-size:11px;opacity:.82;display:block;line-height:1.5}
+
+/* ============ Engine demos ============ */
+.engines{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+@media(max-width:960px){.engines{grid-template-columns:1fr}}
+.engine-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);transition:.3s}
+.engine-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-4px)}
+.engine-head{padding:22px 24px 14px}
+.engine-head h3{font-size:19px;font-weight:700;display:flex;align-items:center;gap:10px}
+.engine-head .num{font-size:11px;font-weight:800;color:var(--blue-600);background:var(--blue-50);border:1px solid var(--blue-100);padding:2px 8px;border-radius:6px}
+.engine-head p{font-size:13.5px;color:var(--ink-3);margin-top:8px}
+.engine-demo{margin:0 20px 20px;background:#f6f9fe;border:1px solid var(--line);border-radius:12px;padding:16px;min-height:220px;position:relative}
+
+/* reading-order demo */
+.ro-layout{position:relative;height:190px}
+.ro-block{position:absolute;border-radius:8px;background:#fff;border:1.5px solid var(--cbd,#cbd5e1);display:grid;place-items:center;font-weight:800;font-size:15px;color:var(--cbd,#94a3b8);transition:.3s;cursor:default}
+.ro-block.seg{color:var(--blue-600);border-color:var(--blue-500);background:rgba(37,99,235,.08);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.ro-controls{display:flex;gap:8px;margin-bottom:12px}
+.chip-btn{font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink-2);transition:.2s}
+.chip-btn.active{background:var(--blue-600);border-color:var(--blue-600);color:#fff}
+
+/* table demo */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:8px;overflow:hidden}
+.tbl th,.tbl td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+.tbl th{background:var(--blue-50);color:var(--blue-700);font-weight:700}
+.tbl .merged{background:rgba(8,145,178,.08);color:var(--cyan);font-weight:700}
+.tbl-note{margin-top:10px;font-size:12px;color:var(--ink-3);display:flex;gap:14px;flex-wrap:wrap}
+.tbl-note span::before{content:"●";font-size:8px;margin-right:5px;vertical-align:2px}
+.hl-cell{background:rgba(37,99,235,.16)!important;outline:1.5px solid var(--blue-500)}
+
+/* tree demo */
+.tree{font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--ink-2)}
+.tree .node{cursor:pointer;padding:0 6px;border-radius:6px;transition:.15s;white-space:nowrap}
+.tree .node:hover{background:var(--blue-50);color:var(--blue-700)}
+.tree .caret{color:var(--ink-3);display:inline-block;width:14px;transition:.2s}
+.tree .caret.open{transform:rotate(90deg)}
+.tree .kids{margin-left:18px;border-left:1px dashed var(--line);padding-left:10px;overflow:hidden;transition:.25s;max-height:400px}
+.tree .kids.closed{max-height:0;overflow:hidden}
+.tree .t-key{color:var(--blue-600)}.tree .t-str{color:var(--green)}.tree .t-num{color:var(--amber)}
+
+/* ============ Architecture ============ */
+.arch-wrap{background:#0f172a;border-radius:28px;padding:64px 48px;color:#fff;position:relative;overflow:hidden}
+.arch-wrap::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 300px at 90% 0%,rgba(37,99,235,.25),transparent 60%)}
+.arch-grid{position:relative;display:grid;grid-template-columns:220px 1fr;gap:40px;align-items:center}
+@media(max-width:900px){.arch-grid{grid-template-columns:1fr}}
+.arch-side h2{font-size:28px;font-weight:800;line-height:1.35}
+.arch-side p{margin-top:14px;color:#94a3b8;font-size:14px}
+.arch-layers{display:flex;flex-direction:column;gap:10px}
+.arch-layer{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 18px;transition:.25s;cursor:default}
+.arch-layer:hover{background:rgba(255,255,255,.11);transform:translateX(6px)}
+.arch-layer .name{width:120px;flex-shrink:0;font-weight:700;font-size:14.5px}
+.arch-layer .name small{display:block;font-weight:400;font-size:11px;color:#94a3b8}
+.arch-layer .mods{display:flex;gap:8px;flex-wrap:wrap}
+.mod{font-size:12px;padding:4px 11px;border-radius:999px;background:rgba(37,99,235,.25);border:1px solid rgba(96,165,250,.4);color:#bfdbfe;white-space:nowrap}
+.arch-layer.hot .name{color:#60a5fa}
+
+/* ============ Benchmark ============ */
+.bench-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:28px}
+@media(max-width:960px){.bench-grid{grid-template-columns:1fr}}
+.bench-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-sm)}
+.bench-card h3{font-size:17px;font-weight:700;margin-bottom:4px}
+.bench-card .src{font-size:12px;color:var(--ink-3);margin-bottom:20px}
+.bar-row{margin-bottom:14px}
+.bar-label{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;color:var(--ink-2)}
+.bar-track{height:9px;border-radius:6px;background:#eef2f7;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;width:0;transition:width 1.1s cubic-bezier(.25,.8,.3,1)}
+.legend{display:flex;gap:18px;margin-top:18px;font-size:12px;color:var(--ink-3)}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:-1px}
+.perf-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.perf-table th,.perf-table td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left}
+.perf-table th{color:var(--ink-3);font-size:12px;font-weight:600;letter-spacing:.5px}
+.perf-table td:first-child{font-weight:600}
+.perf-table .val{font-family:var(--mono);font-weight:700;color:var(--blue-600)}
+
+/* ============ Playground ============ */
+.playground{background:linear-gradient(180deg,#fff, #f2f7ff)}
+.pg-shell{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-lg);overflow:hidden}
+.pg-top{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--line);background:#fbfdff;flex-wrap:wrap}
+.pg-top .file-pill{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;background:#fff;border:1px solid var(--line);padding:7px 14px;border-radius:10px}
+.pg-top .file-pill .pdfico{width:24px;height:24px;border-radius:6px;background:#fee2e2;color:#dc2626;display:grid;place-items:center;font-size:10px;font-weight:800}
+.pg-top .spacer{flex:1}
+.pg-body{display:grid;grid-template-columns:300px 1fr;min-height:520px}
+@media(max-width:900px){.pg-body{grid-template-columns:1fr}}
+.pg-pipeline{border-right:1px solid var(--line);padding:22px;background:#fbfdff}
+@media(max-width:900px){.pg-pipeline{border-right:none;border-bottom:1px solid var(--line)}}
+.pg-pipeline h4{font-size:12px;letter-spacing:1.5px;color:var(--ink-3);margin-bottom:16px;font-weight:700}
+.stage{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;margin-bottom:8px;border:1px solid transparent;transition:.3s;position:relative}
+.stage .s-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:14px;background:#fff;border:1px solid var(--line);flex-shrink:0;transition:.3s}
+.stage .s-txt b{font-size:13.5px;font-weight:600;display:block;color:var(--ink-3);transition:.3s}
+.stage .s-txt span{font-size:11px;color:var(--ink-3);opacity:.7}
+.stage .s-state{margin-left:auto;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#eef2f7;color:var(--ink-3)}
+.stage.running{border-color:var(--blue-200);background:var(--blue-50)}
+.stage.running .s-txt b{color:var(--blue-700)}
+.stage.running .s-ico{border-color:var(--blue-400,#60a5fa);animation:ring 1s infinite}
+@keyframes ring{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.3)}50%{box-shadow:0 0 0 6px rgba(37,99,235,0)}}
+.stage.done .s-txt b{color:var(--ink)}
+.stage.done .s-ico{background:var(--blue-600);border-color:var(--blue-600);color:#fff}
+.stage.done .s-state{background:#dcfce7;color:var(--green)}
+.stage.running .s-state{background:var(--blue-600);color:#fff}
+.pg-log{margin-top:16px;background:#0f172a;border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:11px;line-height:1.9;color:#86efac;max-height:130px;overflow:hidden}
+.pg-log .dim{color:#64748b}
+.pg-main{padding:22px;display:flex;flex-direction:column}
+.pg-toolbar{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.view-tabs{display:flex;background:#eef2f7;border-radius:10px;padding:4px;gap:2px}
+.view-tabs button{font-size:13px;font-weight:600;padding:6px 16px;border-radius:8px;color:var(--ink-3);transition:.2s}
+.view-tabs button.active{background:#fff;color:var(--blue-700);box-shadow:var(--shadow-sm)}
+.pg-output{flex:1;position:relative;background:#fbfdff;border:1px solid var(--line);border-radius:14px;overflow:auto;min-height:380px}
+.pg-empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--ink-3)}
+.pg-empty .big{font-size:44px;margin-bottom:12px;opacity:.5}
+.pg-run{margin:0 auto;display:block}
+/* markdown output */
+.md-view{padding:24px 28px;font-size:14px;line-height:1.85;display:none}
+.md-view h1{font-size:20px;margin:6px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--blue-100);color:var(--blue-700)}
+.md-view h2{font-size:16px;margin:18px 0 8px;color:var(--ink)}
+.md-view p{color:var(--ink-2);margin-bottom:10px}
+.md-view table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0}
+.md-view th,.md-view td{border:1px solid var(--line);padding:6px 12px;text-align:center}
+.md-view th{background:var(--blue-50)}
+.md-view .fm{font-family:var(--mono);background:#eef2f7;border-radius:6px;padding:1px 7px;font-size:12.5px;color:var(--blue-700)}
+/* json output */
+.json-view{padding:22px 26px;font-family:var(--mono);font-size:12.5px;line-height:2;display:none;color:var(--ink-2)}
+.json-view .jrow{display:block;border-radius:6px;padding:0 8px;cursor:pointer;transition:.15s;white-space:pre}
+.json-view .jrow:hover{background:var(--blue-50)}
+.json-view .jrow.hl{background:rgba(37,99,235,.14);outline:1px solid var(--blue-300,#93c5fd)}
+.jk{color:var(--blue-600)}.js{color:var(--green)}.jn{color:var(--amber)}.jp{color:#94a3b8}
+/* page/trace output */
+.trace-view{display:none;padding:22px;position:relative}
+.trace-page{width:min(460px,100%);margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-md);padding:34px 38px;position:relative;min-height:420px}
+.trace-region{position:absolute;border:1.5px dashed transparent;border-radius:6px;transition:.25s;pointer-events:none}
+.trace-region.on{border-color:var(--blue-500);background:rgba(37,99,235,.09);box-shadow:0 0 0 4px rgba(37,99,235,.1)}
+.trace-region .lbl{position:absolute;top:-24px;left:0;font-size:10px;font-weight:800;background:var(--blue-600);color:#fff;padding:2px 8px;border-radius:5px;display:none;white-space:nowrap}
+.trace-region.on .lbl{display:block}
+.trace-title{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:14px}
+.trace-h2{font-size:13.5px;font-weight:700;color:var(--blue-700);margin:14px 0 8px}
+.trace-p{font-size:12px;color:var(--ink-2);margin-bottom:9px;line-height:1.8}
+.trace-table{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0}
+.trace-table th,.trace-table td{border:1px solid var(--line);padding:5px 8px;text-align:center}
+.trace-table th{background:var(--blue-50)}
+.trace-badge{position:absolute;right:-10px;top:-10px;background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;box-shadow:var(--shadow-sm)}
+
+/* ============ Scenarios ============ */
+.scen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+@media(max-width:960px){.scen-grid{grid-template-columns:1fr}}
+.scen-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-sm);transition:.3s;position:relative;overflow:hidden}
+.scen-card::after{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue-500),var(--cyan));transform:scaleX(0);transform-origin:left;transition:.4s}
+.scen-card:hover::after{transform:scaleX(1)}
+.scen-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.scen-ico{width:48px;height:48px;border-radius:13px;background:var(--blue-50);border:1px solid var(--blue-100);display:grid;place-items:center;font-size:22px;margin-bottom:18px}
+.scen-card h3{font-size:17.5px;font-weight:700;margin-bottom:10px}
+.scen-card p{font-size:13.5px;color:var(--ink-3);margin-bottom:16px}
+.scen-flow{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;flex-wrap:wrap}
+.scen-flow span{background:#f1f5f9;border:1px solid var(--line);border-radius:8px;padding:4px 10px;color:var(--ink-2)}
+.scen-flow i{color:var(--blue-500);font-style:normal}
+.scen-tags{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
+.scen-tags em{font-style:normal;font-size:11px;font-weight:600;color:var(--cyan);background:rgba(8,145,178,.08);border:1px solid rgba(8,145,178,.2);padding:2px 9px;border-radius:999px}
+
+/* ============ API ============ */
+.api-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+@media(max-width:960px){.api-grid{grid-template-columns:1fr}}
+.api-code{background:#0f172a;border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
+.api-tabs{display:flex;gap:4px;padding:12px 16px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.api-tabs button{font-size:12.5px;font-weight:600;color:#94a3b8;padding:8px 16px;border-radius:8px 8px 0 0;transition:.2s}
+.api-tabs button.active{color:#fff;background:rgba(255,255,255,.08)}
+.api-code pre{padding:20px 22px;font-family:var(--mono);font-size:12.5px;line-height:1.9;color:#e2e8f0;overflow:auto;display:none}
+.api-code pre.active{display:block}
+.tk-c{color:#64748b}.tk-k{color:#93c5fd}.tk-s{color:#86efac}.tk-f{color:#fbbf24}
+.api-info h3{font-size:22px;font-weight:800;margin-bottom:14px}
+.api-info p{color:var(--ink-3);font-size:14.5px;margin-bottom:22px}
+.feat-list{list-style:none}
+.feat-list li{display:flex;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line);font-size:14px;color:var(--ink-2)}
+.feat-list li:last-child{border:none}
+.feat-list .chk{width:20px;height:20px;border-radius:50%;background:#dcfce7;color:var(--green);display:grid;place-items:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+
+/* ============ Footer / CTA ============ */
+.cta{background:linear-gradient(135deg,#1e3a8a,#1d4ed8 60%,#2563eb);border-radius:26px;padding:64px 48px;text-align:center;color:#fff;position:relative;overflow:hidden}
+.cta::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 300px at 50% -20%,rgba(255,255,255,.18),transparent)}
+.cta h2{font-size:32px;font-weight:800;position:relative}
+.cta p{margin:14px 0 30px;color:#bfdbfe;position:relative}
+.cta .btn{position:relative;background:#fff;color:var(--blue-700)}
+footer{border-top:1px solid var(--line);background:#fff;margin-top:0}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;padding:52px 0 36px}
+@media(max-width:760px){.foot-grid{grid-template-columns:1fr 1fr}}
+.foot-grid h5{font-size:13px;font-weight:700;margin-bottom:14px}
+.foot-grid a{display:block;font-size:13px;color:var(--ink-3);padding:4px 0;transition:.2s}
+.foot-grid a:hover{color:var(--blue-600)}
+.foot-bottom{border-top:1px solid var(--line);padding:18px 0;font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(26px);transition:.7s cubic-bezier(.2,.7,.3,1)}
+.reveal.in{opacity:1;transform:none}
+/* ============ Polish & new features ============ */
+:focus-visible{outline:2px solid var(--blue-500);outline-offset:2px;border-radius:6px}
+.skip-link{position:absolute;left:16px;top:-48px;z-index:200;background:var(--blue-600);color:#fff;padding:8px 14px;border-radius:8px;font-weight:600;font-size:13px}
+.skip-link:focus{top:12px}
+.nav-burger{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;align-items:center;justify-content:center;flex-direction:column;gap:5px}
+.nav-burger span{display:block;width:16px;height:2px;background:var(--ink);border-radius:2px;transition:.2s}
+.nav-burger[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.nav-burger[aria-expanded="true"] span:nth-child(2){opacity:0}
+.nav-burger[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.mobile-drawer{display:none;position:fixed;top:64px;left:0;right:0;background:#fff;border-bottom:1px solid var(--line);box-shadow:var(--shadow-md);padding:12px 24px 20px;z-index:99;flex-direction:column;gap:4px}
+.mobile-drawer.open{display:flex}
+.mobile-drawer a{padding:10px 8px;font-size:15px;color:var(--ink-2);border-radius:8px;font-weight:600}
+.mobile-drawer a:hover,.mobile-drawer a.active{background:var(--blue-50);color:var(--blue-700)}
+@media(max-width:900px){
+  .nav-cta .btn-ghost{display:none}
+  .nav-burger{display:flex}
+}
+
+/* Token savings */
+.token-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:stretch}
+@media(max-width:960px){.token-grid{grid-template-columns:1fr}}
+.token-points{display:flex;flex-direction:column;gap:12px}
+.token-point{display:flex;gap:14px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow-sm)}
+.token-point .tp-ico{width:40px;height:40px;border-radius:11px;background:var(--blue-50);border:1px solid var(--blue-100);display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.token-point b{display:block;font-size:14.5px;margin-bottom:2px}
+.token-point span{font-size:13px;color:var(--ink-3)}
+.token-viz{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:26px 28px;box-shadow:var(--shadow-sm)}
+.token-viz h3{font-size:16px;margin-bottom:4px}
+.token-viz .src{font-size:12px;color:var(--ink-3);margin-bottom:18px}
+.tk-row{margin-bottom:16px}
+.tk-row .bar-label b.saved{color:var(--green)}
+.token-callout{margin-top:8px;padding:14px 16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;font-size:13.5px;color:#166534}
+.token-callout b{font-variant-numeric:tabular-nums}
+
+/* Playground extras */
+.file-select,.mode-select{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sample-btn{font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-2)}
+.sample-btn.active{background:var(--blue-50);border-color:var(--blue-200);color:var(--blue-700)}
+.upload-btn{position:relative;overflow:hidden}
+.upload-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.token-meter{display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:10px 14px;background:var(--blue-50);border:1px solid var(--blue-100);border-radius:12px;margin-top:12px;font-size:12.5px;color:var(--ink-2)}
+.token-meter .tm-item{display:flex;flex-direction:column;gap:1px}
+.token-meter .tm-item b{font-size:16px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.token-meter .tm-save{margin-left:auto;font-weight:800;color:var(--green);font-size:15px}
+.mode-tabs{display:flex;background:#eef2f7;border-radius:10px;padding:4px;gap:2px}
+.mode-tabs button{font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:8px;color:var(--ink-3)}
+.mode-tabs button.active{background:#fff;color:var(--blue-700);box-shadow:var(--shadow-sm)}
+.pg-actions{display:flex;gap:8px;flex-wrap:wrap}
+.chunk-list{padding:18px 22px;display:none;gap:12px;flex-direction:column}
+.chunk-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.chunk-card header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;color:var(--ink-3)}
+.chunk-card header b{color:var(--blue-700);font-size:13px}
+.chunk-card p{font-size:13.5px;color:var(--ink-2);line-height:1.7}
+.trace-region{pointer-events:auto;cursor:pointer}
+
+/* FAQ / modal / toast */
+.faq-list{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.faq-item{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.faq-item button{width:100%;text-align:left;padding:16px 20px;font-size:15px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--ink);gap:16px}
+.faq-item button::after{content:"+";color:var(--blue-600);font-size:20px;font-weight:600}
+.faq-item.open button::after{content:"–"}
+.faq-item .faq-body{display:none;padding:0 20px 16px;font-size:14px;color:var(--ink-3);line-height:1.75}
+.faq-item.open .faq-body{display:block}
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-backdrop.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:min(520px,100%);box-shadow:var(--shadow-lg);padding:28px 28px 24px;max-height:min(86vh,720px);overflow:auto}
+.modal h3{font-size:20px;margin-bottom:6px}
+.modal p.lead{font-size:13.5px;color:var(--ink-3);margin-bottom:18px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;background:#fff}
+.field textarea{min-height:80px;resize:vertical}
+.field .err{display:none;font-size:12px;color:var(--red);margin-top:4px}
+.field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--red)}
+.field.invalid .err{display:block}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+.demo-key{margin-top:14px;background:#0f172a;color:#86efac;font-family:var(--mono);font-size:13px;padding:12px 14px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;word-break:break-all}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:10px 18px;border-radius:999px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;z-index:300;transition:.25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.copy-code{position:absolute;top:12px;right:12px;font-size:11.5px;font-weight:700;color:#bfdbfe;border:1px solid rgba(255,255,255,.18);padding:4px 10px;border-radius:8px}
+.api-code{position:relative}
+.legal-body{font-size:13.5px;color:var(--ink-2)}
+.legal-body h4{margin:16px 0 6px;color:var(--ink)}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+}
+
+/* ============ Enterprise console ============ */
+.console-wrap{background:#eef2f7}
+.console-shell{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-lg);overflow:hidden;min-height:560px;display:grid;grid-template-columns:220px 1fr}
+@media(max-width:900px){.console-shell{grid-template-columns:1fr}}
+.console-side{background:#f8fafc;border-right:1px solid var(--line);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+@media(max-width:900px){.console-side{flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid var(--line)}}
+.console-brand{display:flex;align-items:center;gap:8px;padding:6px 10px 16px;font-weight:800;font-size:13.5px}
+.console-side button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 10px;border-radius:10px;font-size:13.5px;font-weight:600;color:var(--ink-2)}
+@media(max-width:900px){.console-side button{width:auto}}
+.console-side button.active{background:var(--blue-50);color:var(--blue-700)}
+.console-side button .new{margin-left:auto;font-size:10px;background:#dbeafe;color:var(--blue-700);padding:1px 6px;border-radius:999px}
+.console-main{padding:18px 20px 22px;min-width:0}
+.console-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.console-head h3{font-size:18px;font-weight:800}
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+@media(max-width:960px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+.kpi{background:#fbfdff;border:1px solid var(--line);border-radius:12px;padding:12px 10px;text-align:center}
+.kpi b{display:block;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi span{font-size:11.5px;color:var(--ink-3)}
+.kpi.ok b{color:var(--green)}.kpi.warn b{color:var(--amber)}.kpi.bad b{color:var(--red)}.kpi.run b{color:var(--blue-600)}
+.console-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.console-tools input[type="search"],.console-tools select{border:1px solid var(--line);border-radius:10px;padding:7px 12px;font:inherit;font-size:13px;background:#fff;min-width:160px}
+.task-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+.task-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px}
+.task-table th,.task-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.task-table th{background:#f8fafc;color:var(--ink-3);font-size:11.5px;font-weight:700}
+.task-table tr{cursor:pointer}
+.task-table tbody tr:hover{background:var(--blue-50)}
+.task-table tr.selected{background:var(--blue-50)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.badge-wait{background:#eef2f7;color:var(--ink-3)}
+.badge-run{background:var(--blue-50);color:var(--blue-700)}
+.badge-ok{background:#dcfce7;color:var(--green)}
+.badge-fail{background:#fee2e2;color:var(--red)}
+.badge-stop{background:#f1f5f9;color:#475569}
+.badge-batch{background:#ffedd5;color:#c2410c}
+.linkish{color:var(--blue-600);font-weight:700;background:none;border:0;font:inherit;cursor:pointer;padding:0}
+.task-detail{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fbfdff;display:none}
+.task-detail.open{display:block}
+.task-detail h4{font-size:14px;margin-bottom:8px}
+.mini-log{font-family:var(--mono);font-size:11.5px;background:#0f172a;color:#86efac;border-radius:10px;padding:10px 12px;max-height:120px;overflow:auto;line-height:1.8}
+
+/* ops */
+.ops-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}
+@media(max-width:900px){.ops-grid{grid-template-columns:1fr}}
+.ops-card{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:#fff}
+.ops-card h4{font-size:13px;margin-bottom:10px;color:var(--ink-2)}
+.chart{width:100%;height:140px;display:block}
+.ops-help{width:100%;border-collapse:collapse;font-size:12.5px}
+.ops-help th,.ops-help td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+.ops-help th{color:var(--ink-3);font-size:11.5px}
+
+/* integrate */
+.integ{display:grid;grid-template-columns:180px 1fr;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;min-height:340px}
+@media(max-width:800px){.integ{grid-template-columns:1fr}}
+.integ-list{background:#f8fafc;border-right:1px solid var(--line)}
+.integ-list button{display:block;width:100%;text-align:left;padding:12px 14px;font-size:13.5px;font-weight:600;color:var(--ink-2);border-bottom:1px solid var(--line)}
+.integ-list button.active{background:#fff;color:var(--blue-700);box-shadow:inset 3px 0 0 var(--blue-600)}
+.integ-body{padding:16px 18px}
+.integ-tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.integ-tabs button{font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:8px;color:var(--ink-3);background:#eef2f7}
+.integ-tabs button.active{background:var(--blue-600);color:#fff}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:8px 16px;font-size:13.5px;align-items:center}
+.kv label{color:var(--ink-3)}
+.kv input,.kv select,.kv textarea{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13.5px;width:100%}
+
+/* apps */
+.apps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.apps-grid{grid-template-columns:1fr}}
+.app-card{border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px;background:#fff}
+.app-card h4{font-size:16px}
+.app-card p{font-size:13px;color:var(--ink-3)}
+.app-card ul{margin:4px 0 8px 18px;font-size:13px;color:var(--ink-2)}
+.app-panel{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:16px;background:#fbfdff;display:none}
+.app-panel.open{display:block}
+.conv-row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
+.conv-row label{font-size:12px;font-weight:700;color:var(--ink-3);display:flex;flex-direction:column;gap:4px}
+.conv-preview{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:14px;font-size:13.5px;color:var(--ink-2);min-height:80px;white-space:pre-wrap}
+
+/* multimodal / pain / cases / extract */
+.mm-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:900px){.mm-grid{grid-template-columns:1fr}}
+.mm-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm)}
+.mm-card h3{font-size:18px;margin-bottom:8px}
+.mm-card p{font-size:13.5px;color:var(--ink-3);margin-bottom:12px}
+.latex-box{font-family:var(--mono);background:#0f172a;color:#86efac;border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.8}
+.pain-list{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.pain-row{display:grid;grid-template-columns:180px 1fr 1fr;gap:0;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+@media(max-width:800px){.pain-row{grid-template-columns:1fr}}
+.pain-row .name{background:var(--blue-600);color:#fff;font-weight:700;padding:16px 18px;display:flex;align-items:center}
+.pain-row .cell{padding:14px 16px;font-size:13.5px;color:var(--ink-2);display:flex;align-items:center;gap:8px;border-left:1px solid var(--line)}
+@media(max-width:800px){.pain-row .cell{border-left:none;border-top:1px solid var(--line)}}
+.case-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:900px){.case-grid{grid-template-columns:1fr}}
+.case-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow-sm)}
+.case-card .tag{font-size:12px;font-weight:700;color:var(--blue-600);margin-bottom:8px}
+.case-card h3{font-size:18px;margin-bottom:10px}
+.case-card p{font-size:13.5px;color:var(--ink-3);margin-bottom:14px}
+.case-card li{font-size:13.5px;color:var(--ink-2);margin:6px 0 6px 18px}
+.extract-shell{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-md);overflow:hidden;display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:900px){.extract-shell{grid-template-columns:1fr}}
+.extract-left,.extract-right{padding:20px}
+.extract-right{background:#0f172a;color:#e2e8f0;font-family:var(--mono);font-size:12.5px;line-height:1.8;overflow:auto;min-height:280px}
+.field-chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.field-chips label{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:5px 10px;background:#fff;display:flex;gap:6px;align-items:center;cursor:pointer}
+.extract-src{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:13.5px;line-height:1.8;color:var(--ink-2);min-height:180px}
+.extract-src mark{background:#fef08a;padding:0 2px;border-radius:3px}
+.value-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:800px){.value-grid{grid-template-columns:1fr}}
+.value-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px}
+.value-card h3{font-size:16px;margin-bottom:8px}
+.value-card p{font-size:13.5px;color:var(--ink-3)}
+.console-note{font-size:12px;color:var(--ink-3);margin-top:12px}
+
+</style>
+</head>
+<body>
+<a class="skip-link" href="#top">跳到主要内容</a>
+
+<!-- ================= NAV ================= -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#top"><span class="logo-mark">P1</span>ParseOne<span style="font-size:11px;color:var(--ink-3);font-weight:500;margin-left:2px">文档解析智能平台</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="#pipeline">标准处理层</a>
+      <a href="#engines">核心引擎</a>
+      <a href="#console">控制台</a>
+      <a href="#playground">在线体验</a>
+      <a href="#extract">智能抽取</a>
+      <a href="#scenarios">应用场景</a>
+      <a href="#cases">案例</a>
+      <a href="#api">开放 API</a>
+    </div>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="#playground">在线体验</a>
+      <button type="button" class="btn btn-primary" data-open="keyModal">获取 API Key</button>
+      <button type="button" class="nav-burger" id="navBurger" aria-label="打开菜单" aria-expanded="false" aria-controls="mobileDrawer"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="mobile-drawer" id="mobileDrawer">
+  <a href="#pipeline">标准处理层</a>
+  <a href="#engines">核心引擎</a>
+  <a href="#console">控制台</a>
+  <a href="#playground">在线体验</a>
+  <a href="#extract">智能抽取</a>
+  <a href="#scenarios">应用场景</a>
+  <a href="#cases">案例</a>
+  <a href="#api">开放 API</a>
+  <a href="#faq">常见问题</a>
+  <button type="button" class="btn btn-primary" data-open="keyModal" style="margin-top:8px">获取 API Key</button>
+</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow"><i class="dot"></i>V3 引擎已发布 · 版面分析 Layout-Engine 2.0</span>
+      <h1>企业文档进入 AI 之前的<br><span class="grad">标准处理层</span></h1>
+      <p class="lead">统一解析、结构化、转换、切片与回溯。把 PDF、扫描件、图纸、报表变成 LLM 最友好的 Markdown / JSON —— 可计算、可检索、可回答。</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="#playground">▶ 在线解析演示</a>
+        <a class="btn btn-ghost btn-lg" href="#api">查看 API 文档</a>
+      </div>
+      <div class="hero-meta">
+        <div><b>300ms+</b>单页解析耗时</div>
+        <div><b>52</b>种识别语言</div>
+        <div><b>99.5%</b>版面元素检出率</div>
+        <div><b>20/万</b>文件级错误率</div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="doc-card">
+        <div class="doc-toolbar">
+          <i class="dot" style="background:#f87171"></i><i class="dot" style="background:#fbbf24"></i><i class="dot" style="background:#34d399"></i>
+          <span style="font-size:11.5px;color:var(--ink-3);margin-left:8px">年度报告_2026.pdf — 128 页 · 扫描件</span>
+        </div>
+        <div class="doc-body" id="docBody">
+          <div class="scanline"></div>
+          <div class="fake-line" style="width:42%;height:14px;background:#c7dbff"></div>
+          <div class="fake-line" style="width:88%"></div>
+          <div class="fake-line" style="width:95%"></div>
+          <div class="fake-line" style="width:78%"></div>
+          <div style="height:16px"></div>
+          <div class="fake-line" style="width:64%;height:12px;background:#dbe7ff"></div>
+          <div class="fake-line" style="width:92%"></div>
+          <div class="fake-line" style="width:86%"></div>
+          <!-- table mock -->
+          <div style="margin:6px 0 14px;border:1px solid var(--line);border-radius:8px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;background:var(--blue-50);font-size:10px;color:var(--blue-700);font-weight:700">
+              <div style="padding:6px 10px;border-right:1px solid var(--line)">分产品</div><div style="padding:6px 10px;border-right:1px solid var(--line)">营收</div><div style="padding:6px 10px;border-right:1px solid var(--line)">同比</div><div style="padding:6px 10px">毛利率</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;font-size:10px;color:var(--ink-2)">
+              <div style="padding:5px 10px;border-top:1px solid var(--line);border-right:1px solid var(--line)">智能识别</div><div style="padding:5px 10px;border-top:1px solid var(--line);border-right:1px solid var(--line)">4.52 亿</div><div style="padding:5px 10px;border-top:1px solid var(--line);border-right:1px solid var(--line)">+38%</div><div style="padding:5px 10px;border-top:1px solid var(--line)">71.2%</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;font-size:10px;color:var(--ink-2)">
+              <div style="padding:5px 10px;border-top:1px solid var(--line);border-right:1px solid var(--line)">大数据服务</div><div style="padding:5px 10px;border-top:1px solid var(--line);border-right:1px solid var(--line)">2.87 亿</div><div style="padding:5px 10px;border-top:1px solid var(--line);border-right:1px solid var(--line)">+22%</div><div style="padding:5px 10px;border-top:1px solid var(--line)">63.5%</div>
+            </div>
+          </div>
+          <div class="fake-line" style="width:90%"></div>
+          <div class="fake-line" style="width:82%"></div>
+          <!-- layout regions -->
+          <div class="region-box" id="rb1" style="top:12px;left:-8px;width:46%;height:26px"><span class="tag">标题 Heading</span></div>
+          <div class="region-box" id="rb2" style="top:52px;left:-8px;width:96%;height:96px"><span class="tag">正文 Paragraph</span></div>
+          <div class="region-box" id="rb3" style="top:158px;left:-8px;width:96%;height:88px"><span class="tag">表格 Table · 无线表</span></div>
+          <div class="region-box" id="rb4" style="top:258px;left:-8px;width:96%;height:42px"><span class="tag">段落 · 阅读顺序 #4</span></div>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div><span class="c">// output.md</span></div>
+        <div><span class="k">##</span> 分产品经营数据</div>
+        <div><span class="k">|</span> 产品 <span class="k">|</span> 营收 <span class="k">|</span> 同比 <span class="k">|</span></div>
+        <div><span class="k">|---</span>---<span class="k">|---</span>---<span class="k">|</span></div>
+        <div><span class="k">|</span> 智能识别 <span class="k">|</span> <span class="s">4.52亿</span> <span class="k">|</span> +38% <span class="k">|</span></div>
+        <div><span class="k">|</span> 大数据 <span class="k">|</span> <span class="s">2.87亿</span> <span class="k">|</span> +22% <span class="k">|</span></div>
+        <div style="margin-top:8px"><span class="c">✓ 128 页 · P90 1.9s · 0 丢页</span></div>
+      </div>
+      <div class="chip-float" style="left:-26px;bottom:64px"><span class="ico" style="background:var(--green)">✓</span>跨页表格自动拼接</div>
+      <div class="chip-float" style="left:-10px;top:6px;animation-delay:1.2s"><span class="ico" style="background:var(--blue-600)">⇄</span>阅读顺序还原 · 多栏</div>
+      <div class="chip-float" style="right:-22px;bottom:-14px;animation-delay:2s"><span class="ico" style="background:var(--cyan)">∑</span>公式 → LaTeX 回溯定位</div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= STATS ================= -->
+<div class="stats reveal">
+  <div class="container stats-grid">
+    <div class="stat"><b data-count="30">0</b><span>支持的文档格式与类型</span></div>
+    <div class="stat"><b data-count="2000" data-suffix="+">0</b><span>全球企业客户接入</span></div>
+    <div class="stat"><b data-count="16" data-suffix=" 项">0</b><span>AI 学术竞赛世界冠军</span></div>
+    <div class="stat"><b data-count="117" data-suffix=" 项">0</b><span>智能文字识别发明专利</span></div>
+  </div>
+</div>
+
+<!-- ================= PIPELINE ================= -->
+<section id="pipeline" class="pipeline-wrap">
+  <div class="container">
+    <div class="sec-head center reveal">
+      <span class="sec-tag">Standard Processing Layer</span>
+      <h2>五步标准处理层，打通文档到智能应用的最后一公里</h2>
+      <p>多来源异构文档统一进入标准处理层，输出 AI 与业务系统可直接消费的规范、可回溯的高质量数据入口。</p>
+    </div>
+    <div class="pipeline reveal">
+      <div class="pipe-col">
+        <h4>多来源文档输入</h4>
+        <div class="pipe-item"><span class="ico" style="background:#fee2e2;color:#dc2626">PDF</span>PDF 文档（电子 / 扫描）</div>
+        <div class="pipe-item"><span class="ico" style="background:#dbeafe;color:#1d4ed8">W</span>Word / PPT / OFD</div>
+        <div class="pipe-item"><span class="ico" style="background:#dcfce7;color:#059669">X</span>Excel 表格 / CSV</div>
+        <div class="pipe-item"><span class="ico" style="background:#fef3c7;color:#d97706">IMG</span>图片 / 照片 / 工程图纸</div>
+        <div class="pipe-item"><span class="ico" style="background:#f1f5f9;color:#334155">URL</span>网页 / 工单 / 系统日志</div>
+      </div>
+      <div class="pipe-core">
+        <div class="core-step"><div class="big">🔍</div><b>解析</b><span>版面分析 · OCR 识别 · 元素提取</span></div>
+        <div class="core-step"><div class="big">🧱</div><b>结构化</b><span>阅读顺序 · 层级树 · 语义解析</span></div>
+        <div class="core-step"><div class="big">⇄</div><b>转换</b><span>Markdown / JSON / 多格式标准一份</span></div>
+        <div class="core-step"><div class="big">✂️</div><b>切片</b><span>智能切片 · 语义分层 · 多粒度切分</span></div>
+        <div class="core-step"><div class="big">◷</div><b>回溯</b><span>坐标映射 · 版式还原 · 定位审核</span></div>
+      </div>
+      <div class="pipe-col">
+        <h4>输出到 AI 与业务系统</h4>
+        <div class="pipe-item"><span class="ico" style="background:#e0e7ff;color:#4338ca">KB</span>企业知识库 / RAG · Agent</div>
+        <div class="pipe-item"><span class="ico" style="background:#ccfbf1;color:#0f766e">⚙</span>合规审查 / 制造业务系统</div>
+        <div class="pipe-item"><span class="ico" style="background:#ffedd5;color:#c2410c">SRM</span>供应链成本核算 / 比价</div>
+        <div class="pipe-item"><span class="ico" style="background:#fce7f3;color:#be185d">FIN</span>财务核算 / 结算系统</div>
+        <div class="pipe-item"><span class="ico" style="background:#f1f5f9;color:#334155">API</span>接入系统 / Webhook / Dify</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ENGINES ================= -->
+<section id="engines">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-tag">Core Engines</span>
+      <h2>三大核心引擎，攻克文档解析最难啃的骨头</h2>
+      <p>版面分析、表格还原与文档树提取是长文档结构化的三座大山 —— 交互体验以下真实算法逻辑。</p>
+    </div>
+    <div class="engines">
+
+      <!-- Engine 1: reading order -->
+      <div class="engine-card reveal">
+        <div class="engine-head">
+          <h3><span class="num">01</span>阅读顺序还原 Layout-Engine</h3>
+          <p>多栏、跨栏插图、页眉页脚干扰下的阅读顺序重建。点击色块查看算法判定的人眼阅读序列。</p>
+        </div>
+        <div class="engine-demo">
+          <div class="ro-controls">
+            <button class="chip-btn active" data-ro="2col">双栏论文</button>
+            <button class="chip-btn" data-ro="2colT">双栏 + 插图</button>
+          </div>
+          <div class="ro-layout" id="roLayout"></div>
+          <div style="margin-top:10px;font-size:12px;color:var(--ink-3)" id="roHint">▶ 演示中：按算法输出顺序依次点亮</div>
+        </div>
+      </div>
+
+      <!-- Engine 2: table -->
+      <div class="engine-card reveal">
+        <div class="engine-head">
+          <h3><span class="num">02</span>复杂表格还原 Table-Engine</h3>
+          <p>无线表、合并单元格、多级表头、跨页拼接。悬停单元格查看结构还原信息。</p>
+        </div>
+        <div class="engine-demo">
+          <table class="tbl" id="cmpTable">
+            <tr><th style="width:30%">产品线</th><th>2025</th><th>2026E</th><th>同比</th></tr>
+            <tr class="grp"><td colspan="4" class="merged">收入（合并单元格 · 跨两列还原）</td></tr>
+            <tr><td>智能识别</td><td>4.52 亿</td><td>6.24 亿</td><td>+38%</td></tr>
+            <tr><td>大数据服务</td><td>2.87 亿</td><td>3.50 亿</td><td>+22%</td></tr>
+            <tr><td>文档云</td><td>1.63 亿</td><td>2.36 亿</td><td>+45%</td></tr>
+            <tr class="grp"><td colspan="2" class="merged">毛利合计（跨页表头拼接）</td><td>6.02 亿</td><td>8.71 亿</td></tr>
+          </table>
+          <div class="tbl-note">
+            <span style="color:var(--blue-500)">悬停查看还原逻辑</span>
+            <span style="color:var(--cyan)">■ 无线表边界推断</span>
+            <span style="color:var(--green)">■ 合并单元格还原</span>
+            <span style="color:var(--amber)">■ 跨页表头拼接</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Engine 3: catalog tree -->
+      <div class="engine-card reveal">
+        <div class="engine-head">
+          <h3><span class="num">03</span>文档树提取 Catalog-Engine</h3>
+          <p>标题层级智能识别（规则 + 视觉双通道），扫描版长文档也能构建完整目录树。点击节点折叠 / 展开并回溯定位。</p>
+        </div>
+        <div class="engine-demo">
+          <div class="tree" id="docTree"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= MULTIMODAL ================= -->
+<section id="multimodal">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-tag">Multimodal Engine</span>
+      <h2>多模态解析：把图纸和公式也变成可计算数据</h2>
+      <p>除了正文和表格，工程图纸的标题栏、明细表，以及论文、专利中的公式与分子式，都能结构化输出并回溯到原图坐标。</p>
+    </div>
+    <div class="mm-grid">
+      <div class="mm-card reveal">
+        <h3>面向工程制造 · 图纸解析</h3>
+        <p>提取标题栏（图号、材料、比例、设计者）、明细表与图面说明，区域坐标可 100% 回溯。适用于装配图、零件图和 CAD 导出件。</p>
+        <table class="tbl">
+          <tr><th>字段</th><th>识别结果</th><th>回溯</th></tr>
+          <tr><td>图号</td><td>DWG-618-A</td><td>标题栏</td></tr>
+          <tr><td>材料</td><td>45# 钢</td><td>标题栏</td></tr>
+          <tr><td>比例</td><td>1:2</td><td>标题栏</td></tr>
+          <tr><td>明细 03</td><td>定位销 φ8×H12 × 4</td><td>明细表</td></tr>
+        </table>
+      </div>
+      <div class="mm-card reveal">
+        <h3>面向科研医药 · 公式与分子式</h3>
+        <p>数学公式还原为 LaTeX，化学反应式与 SMILES 可定位到原文，便于写入知识库和检索。</p>
+        <div class="latex-box">% LaTeX
+\int_{a}^{b} f(x)\,dx = F(b)-F(a)
+
+% SMILES
+C1=CC=C(C=C1)C(=O)O</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================= ARCHITECTURE ================= -->
+<section id="arch" style="background:var(--bg)">
+  <div class="container">
+    <div class="arch-wrap reveal">
+      <div class="arch-grid">
+        <div class="arch-side">
+          <span class="sec-tag" style="color:#60a5fa">Platform Architecture</span>
+          <h2>从解析工具，到企业级文档处理平台</h2>
+          <p>四层架构自底向上：解析引擎保证精度，工程调度保证稳定，应用插件贴近场景，效果应用闭环验证 —— 让批量文档处理从人工分散执行，升级为可管理、可追踪、可运营的企业级流程。</p>
+          <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+            <span class="mod" style="background:rgba(96,165,250,.15)">✔ 百万级任务调度</span>
+            <span class="mod" style="background:rgba(96,165,250,.15)">✔ 多系统统一接入</span>
+            <span class="mod" style="background:rgba(96,165,250,.15)">✔ 样本验证闭环</span>
+          </div>
+        </div>
+        <div class="arch-layers">
+          <div class="arch-layer"><div class="name">效果应用层<small>能力构建应用</small></div><div class="mods"><span class="mod">知识库</span><span class="mod">样本库</span><span class="mod">Dify 验证应用</span><span class="mod">文档问答</span></div></div>
+          <div class="arch-layer"><div class="name">应用插件层<small>贴近具体业务场景</small></div><div class="mods"><span class="mod">格式转换</span><span class="mod">文档翻译</span><span class="mod">知识库智能 Chunk</span><span class="mod">票据审核</span></div></div>
+          <div class="arch-layer"><div class="name">工程调度层<small>支撑私有化与运行</small></div><div class="mods"><span class="mod">任务中心</span><span class="mod">接入系统</span><span class="mod">运维中心</span><span class="mod">解析工作台</span></div></div>
+          <div class="arch-layer hot"><div class="name">解析引擎层<small>处理复杂文档与专业对象</small></div><div class="mods"><span class="mod">OCR</span><span class="mod">版面分析</span><span class="mod">VLM 引擎</span><span class="mod">复杂表格</span><span class="mod">图纸</span><span class="mod">分子式</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CONSOLE ================= -->
+<section id="console" class="console-wrap">
+  <div class="container">
+    <div class="sec-head center reveal">
+      <span class="sec-tag">Enterprise Console</span>
+      <h2>企业控制台：任务、运维、接入与应用，都可以点开试用</h2>
+      <p>以下为本地交互演示，界面逻辑对照企业级平台能力。数据为示意，不会连接真实后端。</p>
+    </div>
+    <div class="console-shell reveal">
+      <aside class="console-side">
+        <div class="console-brand"><span class="logo-mark" style="width:22px;height:22px;font-size:10px;border-radius:6px">P1</span>解析工作台</div>
+        <button type="button" class="active" data-panel="tasks">任务中心</button>
+        <button type="button" data-panel="ops">运维中心</button>
+        <button type="button" data-panel="integ">接入系统</button>
+        <button type="button" data-panel="apps">应用中心 <span class="new">New</span></button>
+      </aside>
+      <div class="console-main">
+
+        <!-- TASKS -->
+        <div class="console-panel" id="panel-tasks">
+          <div class="console-head">
+            <h3>任务中心</h3>
+            <button type="button" class="btn btn-primary" id="newTaskBtn" style="padding:8px 14px">新建任务</button>
+          </div>
+          <div class="kpi-row" id="taskKpis"></div>
+          <div class="console-tools">
+            <input type="search" id="taskQ" placeholder="搜索文件名或任务 ID" autocomplete="off">
+            <select id="taskFilter">
+              <option value="all">全部状态</option>
+              <option value="排队中">排队中</option>
+              <option value="进行中">进行中</option>
+              <option value="成功">成功</option>
+              <option value="失败">失败</option>
+              <option value="已中止">已中止</option>
+              <option value="批量">批量任务</option>
+            </select>
+            <select id="taskType">
+              <option value="all">全部类型</option>
+              <option value="单文件">单文件</option>
+              <option value="批量">批量</option>
+            </select>
+          </div>
+          <div class="task-table-wrap">
+            <table class="task-table">
+              <thead><tr><th>任务 ID</th><th>类型</th><th>文件 / 批次</th><th>调用方式</th><th>优先级</th><th>状态</th><th>耗时</th><th>操作</th></tr></thead>
+              <tbody id="taskBody"></tbody>
+            </table>
+          </div>
+          <div class="task-detail" id="taskDetail"></div>
+        </div>
+
+        <!-- OPS -->
+        <div class="console-panel" id="panel-ops" hidden>
+          <div class="console-head"><h3>运维中心</h3><span class="badge badge-ok">集群运行中</span></div>
+          <div class="kpi-row">
+            <div class="kpi run"><b>42</b><span>吞吐 页/分钟</span></div>
+            <div class="kpi"><b>12s</b><span>P50 耗时</span></div>
+            <div class="kpi"><b>38s</b><span>P95 耗时</span></div>
+            <div class="kpi"><b>86s</b><span>P99 耗时</span></div>
+            <div class="kpi ok"><b>2.4%</b><span>失败率</span></div>
+            <div class="kpi warn"><b>18</b><span>重试中</span></div>
+          </div>
+          <div class="ops-grid">
+            <div class="ops-card">
+              <h4>排队积压与吞吐（近 6 小时）</h4>
+              <svg class="chart" id="opsBars" viewBox="0 0 360 140" role="img" aria-label="吞吐柱状图"></svg>
+            </div>
+            <div class="ops-card">
+              <h4>处理耗时趋势 P50 / P95 / P99</h4>
+              <svg class="chart" id="opsLines" viewBox="0 0 360 140" role="img" aria-label="耗时折线图"></svg>
+            </div>
+            <div class="ops-card" style="grid-column:1/-1">
+              <h4>怎么排查</h4>
+              <table class="ops-help">
+                <tr><th>问题</th><th>去哪里看</th></tr>
+                <tr><td>系统是否正常</td><td>看顶部运行状态与当前集群</td></tr>
+                <tr><td>任务是否积压</td><td>看吞吐和排队柱状图</td></tr>
+                <tr><td>失败原因是什么</td><td>到任务中心打开失败任务日志，或查看异常重试数</td></tr>
+                <tr><td>服务是否稳定</td><td>看失败率与耗时分位</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- INTEG -->
+        <div class="console-panel" id="panel-integ" hidden>
+          <div class="console-head"><h3>接入系统</h3><button type="button" class="btn btn-primary" id="newIntegBtn" style="padding:8px 14px">新建接入</button></div>
+          <div class="integ">
+            <div class="integ-list" id="integList"></div>
+            <div class="integ-body">
+              <div class="integ-tabs">
+                <button type="button" class="active" data-itab="base">基础</button>
+                <button type="button" data-itab="auth">鉴权</button>
+                <button type="button" data-itab="hook">Webhook</button>
+                <button type="button" data-itab="limit">调度限流</button>
+              </div>
+              <div id="integForm"></div>
+              <div class="modal-actions" style="justify-content:flex-start;margin-top:16px">
+                <button type="button" class="btn btn-primary" id="saveInteg">保存配置</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APPS -->
+        <div class="console-panel" id="panel-apps" hidden>
+          <div class="console-head"><h3>应用中心</h3></div>
+          <div class="apps-grid">
+            <div class="app-card">
+              <h4>格式转换</h4>
+              <p>将 PDF、扫描件、图片的解析结果，按文件输出为可编辑 Word、Excel 或图片。</p>
+              <ul><li>PDF ⇄ Word / Excel / 图片</li><li>扫描件、图片转 Word</li><li>按页导出，便于人工复核</li></ul>
+              <button type="button" class="btn btn-primary" data-app="convert">打开转换</button>
+            </div>
+            <div class="app-card">
+              <h4>文档翻译</h4>
+              <p>面向技术资料与业务文档，按文件交付并尽量保留版面、表格和图纸标注。</p>
+              <ul><li>文档级翻译</li><li>手册与图纸标注</li><li>支持多语种知识库建设</li></ul>
+              <button type="button" class="btn btn-primary" data-app="translate">打开翻译</button>
+            </div>
+            <div class="app-card">
+              <h4>知识库智能切分</h4>
+              <p>按标题层级或章节切分，跨页合并、表格整段保留，并带上页码来源。</p>
+              <ul><li>按标题 / 章节切分</li><li>控制 token 预算</li><li>保留出处便于溯源</li></ul>
+              <button type="button" class="btn btn-primary" data-app="chunk">打开切分</button>
+            </div>
+          </div>
+          <div class="app-panel" id="appPanel"></div>
+        </div>
+
+        <div class="console-note">演示说明：新建、重试、保存都只改本页数据，刷新后恢复初始示例。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================= BENCHMARK ================= -->
+<section id="bench">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-tag">Benchmark</span>
+      <h2>用数据说话：年报全元素测试集实测</h2>
+      <p>测试集：年报全元素测试（单页 432 张 / 540 张），对比国际与国内代表性厂商公开引擎。</p>
+    </div>
+    <div class="bench-grid">
+      <div class="bench-card reveal">
+        <h3>表格与结构还原指标对比</h3>
+        <div class="src">数据来源：年报全元素测试集 · 单页 432 张（数值越高越好）</div>
+        <div id="benchBars">
+          <div class="bar-row" data-v="95"><div class="bar-label"><span>平均表格文本全对率 · ParseOne V3</span><b>0.95</b></div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#2563eb,#0891b2)"></div></div></div>
+          <div class="bar-row" data-v="63"><div class="bar-label"><span>国际厂商 B</span><b>0.63</b></div><div class="bar-track"><div class="bar-fill" style="background:#94a3b8"></div></div></div>
+          <div class="bar-row" data-v="29"><div class="bar-label"><span>国内厂商 A</span><b>0.29</b></div><div class="bar-track"><div class="bar-fill" style="background:#cbd5e1"></div></div></div>
+          <div style="height:14px"></div>
+          <div class="bar-row" data-v="94"><div class="bar-label"><span>表格结构树状编辑距离 · ParseOne V3</span><b>0.94</b></div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#2563eb,#0891b2)"></div></div></div>
+          <div class="bar-row" data-v="92"><div class="bar-label"><span>国际厂商 B</span><b>0.92</b></div><div class="bar-track"><div class="bar-fill" style="background:#94a3b8"></div></div></div>
+          <div class="bar-row" data-v="73"><div class="bar-label"><span>国内厂商 A</span><b>0.73</b></div><div class="bar-track"><div class="bar-fill" style="background:#cbd5e1"></div></div></div>
+          <div style="height:14px"></div>
+          <div class="bar-row" data-v="85"><div class="bar-label"><span>平均阅读顺序指标 · ParseOne V3</span><b>0.85</b></div><div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#2563eb,#0891b2)"></div></div></div>
+          <div class="bar-row" data-v="47"><div class="bar-label"><span>国际厂商 B</span><b>0.47</b></div><div class="bar-track"><div class="bar-fill" style="background:#94a3b8"></div></div></div>
+          <div class="bar-row" data-v="35"><div class="bar-label"><span>国内厂商 A</span><b>0.35</b></div><div class="bar-track"><div class="bar-fill" style="background:#cbd5e1"></div></div></div>
+        </div>
+        <div class="legend"><span><i style="background:linear-gradient(90deg,#2563eb,#0891b2)"></i>ParseOne V3</span><span><i style="background:#94a3b8"></i>国际厂商 B</span><span><i style="background:#cbd5e1"></i>国内厂商 A</span></div>
+      </div>
+      <div class="bench-card reveal">
+        <h3>工程性能指标</h3>
+        <div class="src">生产环境滚动 30 天统计</div>
+        <table class="perf-table">
+          <tr><th>指标</th><th>说明</th><th>ParseOne 水平</th></tr>
+          <tr><td>单页耗时</td><td>调用请求到返回</td><td class="val">300~1200ms</td></tr>
+          <tr><td>多页耗时</td><td>整份多页 PDF 完整返回</td><td class="val">100页 P90&lt;2s</td></tr>
+          <tr><td>文件错误率</td><td>无法解析 / 解析失败占比</td><td class="val">约 20 份/万份</td></tr>
+          <tr><td>页面丢失率</td><td>解析失败页面占比</td><td class="val">约 5 页/万页</td></tr>
+          <tr><td>并发能力</td><td>单集群峰值吞吐</td><td class="val">10万 页/分钟</td></tr>
+        </table>
+        <div style="margin-top:20px;padding:14px 16px;background:var(--blue-50);border:1px solid var(--blue-100);border-radius:12px;font-size:13px;color:var(--blue-700)">
+          💡 <b>大模型加速器</b>：文档解析 + acge 文本向量化（C-MTEB 中文榜单第一）+ 开放域信息抽取，让 RAG 问答精度在长文档场景提升 <b>35%+</b>。
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================= TOKEN SAVINGS ================= -->
+<section id="tokens" class="pipeline-wrap">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-tag">Token Efficiency</span>
+      <h2>解析完还不够，还要把送进模型的 token 省下来</h2>
+      <p>页眉页脚、重复表头、水印和散乱空白都会占用上下文窗口。ParseOne 在结构化之后做精简输出与语义切片，让 RAG / Agent 只读真正有用的内容。</p>
+    </div>
+    <div class="token-grid">
+      <div class="token-points reveal">
+        <div class="token-point"><div class="tp-ico">✂</div><div><b>自动剔除版式噪音</b><span>页眉、页脚、页码、水印和装饰线在输出前丢弃，不进入模型上下文。</span></div></div>
+        <div class="token-point"><div class="tp-ico">☰</div><div><b>紧凑 Markdown / JSON</b><span>合并单元格还原为规范表格，去掉重复表头与多余空行，同样一份表少占一截 token。</span></div></div>
+        <div class="token-point"><div class="tp-ico">▣</div><div><b>语义切片，按需检索</b><span>按标题层级和语义边界切分，检索时只注入相关 chunk，避免整本手册塞进一次请求。</span></div></div>
+        <div class="token-point"><div class="tp-ico">🎯</div><div><b>可设 token 预算</b><span>API 支持 token_budget 与 compact 开关，按下游模型窗口自动压缩或截取，结果仍可回溯原文。</span></div></div>
+      </div>
+      <div class="token-viz reveal">
+        <h3>同一页年报，三种送模方式</h3>
+        <div class="src">示意：以「2026 年年度报告（节选）」一页为例，token 按中英混合粗估</div>
+        <div class="tk-row"><div class="bar-label"><span>全量 OCR 原文（含页眉页脚）</span><b>1,240</b></div><div class="bar-track"><div class="bar-fill" data-tk="100" style="background:#94a3b8"></div></div></div>
+        <div class="tk-row"><div class="bar-label"><span>精简 Markdown（推荐接入）</span><b class="saved">680　↓45%</b></div><div class="bar-track"><div class="bar-fill" data-tk="55" style="background:linear-gradient(90deg,#2563eb,#0891b2)"></div></div></div>
+        <div class="tk-row"><div class="bar-label"><span>语义切片后单次检索注入</span><b class="saved">约 180　↓85%</b></div><div class="bar-track"><div class="bar-fill" data-tk="15" style="background:var(--green)"></div></div></div>
+        <div class="token-callout">💡 下面「在线体验」可切换 <b>完整 / 精简 / 切片</b>，实时看到预估 token 和节省比例。本页演示数据为示意。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PLAYGROUND ================= -->
+<section id="playground" class="playground">
+  <div class="container">
+    <div class="sec-head center reveal">
+      <span class="sec-tag">Interactive Demo</span>
+      <h2>在线体验：解析、精简，并看清省了多少 token</h2>
+      <p>选择示例或本地文件，走完解析流水线后，可在 <b>完整 / 精简 / 切片</b> 与 <b>Markdown / JSON / 原文回溯</b> 之间切换。点击 JSON 元素会高亮原文对应区域。演示在本地完成，文件不会上传。</p>
+    </div>
+    <div class="pg-shell reveal">
+      <div class="pg-top">
+        <div class="file-select" id="sampleBar">
+          <button type="button" class="sample-btn active" data-doc="report">年度报告 · 节选</button>
+          <button type="button" class="sample-btn" data-doc="quote">供应商报价单</button>
+          <button type="button" class="sample-btn" data-doc="manual">维修手册</button>
+          <label class="btn btn-ghost upload-btn" style="padding:7px 12px;font-size:12.5px">上传文件<input type="file" id="pgFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.ofd,.txt"></label>
+        </div>
+        <div class="file-pill" id="filePill"><span class="pdfico">PDF</span><span id="filePillName">年度报告_节选.pdf</span> <span id="filePillMeta" style="color:var(--ink-3);font-weight:400">· 1 页 · 扫描件 300dpi</span></div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="runBtn" type="button">▶ 开始解析</button>
+        <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+      </div>
+      <div class="pg-body">
+        <div class="pg-pipeline">
+          <h4>解析流水线 PIPELINE</h4>
+          <div class="stage" data-stage="0"><span class="s-ico">📥</span><div class="s-txt"><b>文档预处理</b><span>去噪 · 纠偏 · 图像增强</span></div><span class="s-state">待运行</span></div>
+          <div class="stage" data-stage="1"><span class="s-ico">🧭</span><div class="s-txt"><b>版面分析</b><span>Layout-Engine 2.0 · 元素检出</span></div><span class="s-state">待运行</span></div>
+          <div class="stage" data-stage="2"><span class="s-ico">🔤</span><div class="s-txt"><b>OCR 全文识别</b><span>52 语种 · 手写兼容</span></div><span class="s-state">待运行</span></div>
+          <div class="stage" data-stage="3"><span class="s-ico">▦</span><div class="s-txt"><b>表格结构化</b><span>无线表 · 合并单元格还原</span></div><span class="s-state">待运行</span></div>
+          <div class="stage" data-stage="4"><span class="s-ico">🌳</span><div class="s-txt"><b>目录树构建</b><span>标题层级 · 阅读顺序</span></div><span class="s-state">待运行</span></div>
+          <div class="stage" data-stage="5"><span class="s-ico">✂️</span><div class="s-txt"><b>精简切片与回溯</b><span>去噪音 · 语义切片 · 坐标绑定</span></div><span class="s-state">待运行</span></div>
+          <div class="pg-log" id="pgLog"><span class="dim">// 运行日志将在此输出</span></div>
+        </div>
+        <div class="pg-main">
+          <div class="pg-toolbar">
+            <div class="mode-tabs" id="modeTabs">
+              <button type="button" data-mode="full">完整输出</button>
+              <button type="button" data-mode="compact" class="active">精简输出</button>
+              <button type="button" data-mode="chunk">语义切片</button>
+            </div>
+            <div class="view-tabs" id="viewTabs">
+              <button type="button" data-view="md" class="active">📝 Markdown</button>
+              <button type="button" data-view="json">🧩 JSON</button>
+              <button type="button" data-view="trace">🖨 原文回溯</button>
+            </div>
+            <div class="pg-actions">
+              <button type="button" class="btn btn-ghost" id="copyOut" style="padding:6px 12px;font-size:12.5px">复制</button>
+              <button type="button" class="btn btn-ghost" id="dlOut" style="padding:6px 12px;font-size:12.5px">下载</button>
+            </div>
+          </div>
+          <div class="token-meter" id="tokenMeter" hidden>
+            <div class="tm-item">全量识别<b id="tkRaw">—</b></div>
+            <div class="tm-item">当前输出<b id="tkNow">—</b></div>
+            <div class="tm-save" id="tkSave">等待解析</div>
+          </div>
+          <div class="pg-output">
+            <div class="pg-empty" id="pgEmpty">
+              <div><div class="big">📄 → ⌨️</div>
+              <b>选择文档后点击「开始解析」</b>
+              <div style="font-size:13px;margin-top:6px">完成后可对比完整、精简与切片三种输出的预估 token</div></div>
+            </div>
+            <div class="md-view" id="viewMd"></div>
+            <div class="json-view" id="viewJson"></div>
+            <div class="chunk-list" id="viewChunk"></div>
+            <div class="trace-view" id="viewTrace"></div>
+          </div>
+          <div style="font-size:12px;color:var(--ink-3);margin-top:10px" id="pgStatus">等待解析…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= EXTRACT ================= -->
+<section id="extract" class="pipeline-wrap">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-tag">Zero-shot Extract</span>
+      <h2>智能抽取：勾选字段，立刻从文档里拿出结构化结果</h2>
+      <p>不必先标注训练。选定文档类型和要抽的字段，演示会在原文中标出依据，并给出 JSON，可直接对接审核或业务系统。</p>
+    </div>
+    <div class="extract-shell reveal">
+      <div class="extract-left">
+        <div class="console-tools" style="margin:0 0 10px">
+          <select id="exDoc">
+            <option value="quote">供应商报价单</option>
+            <option value="contract">采购合同条款</option>
+            <option value="drawing">工程图纸标题栏</option>
+          </select>
+          <button type="button" class="btn btn-primary" id="exRun" style="padding:8px 14px">开始抽取</button>
+        </div>
+        <div class="field-chips" id="exFields"></div>
+        <div class="extract-src" id="exSrc"></div>
+      </div>
+      <pre class="extract-right" id="exOut">// 勾选字段后点击「开始抽取」</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SCENARIOS ================= -->
+<section id="scenarios">
+  <div class="container">
+    <div class="sec-head center reveal">
+      <span class="sec-tag">Use Cases</span>
+      <h2>把「人读的文档」变成「系统可计算的数据」</h2>
+      <p>先看制造业最常见的四类难点，再看三条可落地的业务流。</p>
+    </div>
+    <div class="pain-list reveal">
+      <div class="pain-row"><div class="name">工程图纸</div><div class="cell">痛点：难以理解图面区域逻辑与标注关联</div><div class="cell">解决：多模态解析标题栏、明细表并坐标回溯</div></div>
+      <div class="pain-row"><div class="name">BOM / 报价单</div><div class="cell">痛点：表格复杂，跨页截断、大量合并单元格</div><div class="cell">解决：高保真表格重构，输出可计算 Excel / JSON</div></div>
+      <div class="pain-row"><div class="name">产品维修手册</div><div class="cell">痛点：动辄数百页，图文混排，多语种并存</div><div class="cell">解决：长文档结构化、翻译与语义切片</div></div>
+      <div class="pain-row"><div class="name">质检与合规报告</div><div class="cell">痛点：历史扫描件多，画质差，格式不标准</div><div class="cell">解决：图像增强与 OCR，再进入任务中心批量处理</div></div>
+    </div>
+
+    <div class="scen-grid">
+      <div class="scen-card reveal">
+        <div class="scen-ico">🏭</div>
+        <h3>供应链智能比价自动化</h3>
+        <p>复杂供应商报价单与图纸资料自动解析，图纸说明、BOM 表、报价明细、加工要求一并结构化，驱动 SRM 成本核算与多供应商比价。</p>
+        <div class="scen-flow"><span>报价单 / 图纸</span><i>→</i><span>JSON · Excel</span><i>→</i><span>SRM 比价</span></div>
+        <div class="scen-tags"><em>跨页表格拼接</em><em>多级表头还原</em><em>坐标回溯人审</em></div>
+      </div>
+      <div class="scen-card reveal">
+        <div class="scen-ico">🌍</div>
+        <h3>多语种维修知识库</h3>
+        <p>产品说明书、维修手册、历史技术档案解析与翻译，生成多粒度 RAG Chunk，一线工程师语音提问即可秒级检索、答案溯源。</p>
+        <div class="scen-flow"><span>汇聚技术档案</span><i>→</i><span>解析 · 翻译</span><i>→</i><span>智能切片</span><i>→</i><span>一线工程师</span></div>
+        <div class="scen-tags"><em>长文档结构化</em><em>智能翻译</em><em>答案可溯源</em></div>
+      </div>
+      <div class="scen-card reveal">
+        <div class="scen-ico">🗄️</div>
+        <h3>历史技术档案数字化</h3>
+        <p>工艺卡、检测报告、专利部件等沉睡资料经批量解析，还原版面、表格与标题，输出 Markdown / Word / Excel / JSON 四格式归档入库。</p>
+        <div class="scen-flow"><span>历史扫描件</span><i>→</i><span>批量解析</span><i>→</i><span>四格式输出</span><i>→</i><span>档案 / 知识库</span></div>
+        <div class="scen-tags"><em>任务中心批量</em><em>失败任务重试</em><em>私有化部署</em></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= API ================= -->
+<section id="api" style="background:linear-gradient(180deg,var(--bg),#eef4ff)">
+  <div class="container">
+    <div class="api-grid">
+      <div class="api-code reveal">
+        <div class="api-tabs">
+          <button type="button" class="active" data-lang="curl">cURL</button>
+          <button type="button" data-lang="python">Python</button>
+          <button type="button" data-lang="node">Node.js</button>
+        </div>
+        <button type="button" class="copy-code" id="copyApi">复制</button>
+<pre class="active" data-lang="curl"><span class="tk-c"># 同步解析：任意文档 → Markdown / JSON</span>
+curl -X POST https://api.parseone.ai/v3/documents/parse \
+  -H <span class="tk-s">"Authorization: Bearer $PARSEONE_API_KEY"</span> \
+  -F <span class="tk-s">"file=@annual_report.pdf"</span> \
+  -F <span class="tk-s">'options={
+        "output": ["markdown","json"],
+        "compact": true,              // 精简输出，节省 token
+        "drop_running_headers": true, // 剔除页眉页脚
+        "table_mode": "restore",
+        "cross_page_table": true,
+        "formula": "latex",
+        "chunk": { "strategy": "semantic", "size": 512, "token_budget": 800 }
+      }'</span> \
+  -F <span class="tk-s">"callback_url=https://your-app.com/hooks/parsed"</span>
+
+<span class="tk-c"># → 200 OK (P90 &lt; 2s / 100页)</span></pre>
+<pre data-lang="python"><span class="tk-k">from</span> parseone <span class="tk-k">import</span> Client
+
+client = Client(api_key=<span class="tk-s">"sk-live-…"</span>)
+
+<span class="tk-c"># 批量任务：任务中心自动调度、失败重试、死信队列</span>
+task = client.tasks.create(
+    files=[<span class="tk-s">"s3://bucket/reports/*.pdf"</span>],
+    output=[<span class="tk-s">"markdown"</span>, <span class="tk-s">"json"</span>],
+    table_mode=<span class="tk-s">"restore"</span>,
+    callback=<span class="tk-s">"https://your-app.com/hooks/parsed"</span>,
+)
+
+<span class="tk-k">for</span> doc <span class="tk-k">in</span> client.tasks.stream(task.id):
+    <span class="tk-k">assert</span> doc.traceable  <span class="tk-c"># 每个元素带 bbox，可回溯原文</span>
+    print(doc.markdown[:<span class="tk-f">120</span>])</pre>
+<pre data-lang="node"><span class="tk-k">import</span> { ParseOne } <span class="tk-k">from</span> <span class="tk-s">"@parseone/sdk"</span>;
+
+<span class="tk-k">const</span> client = <span class="tk-k">new</span> ParseOne({ apiKey: process.env.PARSEONE_KEY });
+
+<span class="tk-c">// 流式解析 + 坐标回溯</span>
+<span class="tk-k">const</span> stream = <span class="tk-k">await</span> client.parse.stream(file, {
+  output: [<span class="tk-s">"markdown"</span>, <span class="tk-s">"json"</span>],
+  <span class="tk-k">on</span>Element(el) {
+    <span class="tk-c">// el.bbox → 原文坐标，点击即可高亮定位</span>
+    console.log(el.type, el.bbox);
+  },
+});</pre>
+      </div>
+      <div class="api-info reveal">
+        <span class="sec-tag">Open API</span>
+        <h3>三行代码接入，四个端点跑通全部能力</h3>
+        <p>REST 风格 · OpenAPI 3.1 规范 · SDK 覆盖 Python / Node / Java / Go · 私有化镜像 30 分钟完成部署。</p>
+        <ul class="feat-list">
+          <li><span class="chk">✓</span><span><b>POST /v3/documents/parse</b> — 同步解析，Markdown / JSON 双输出，元素级 bbox 坐标绑定</span></li>
+          <li><span class="chk">✓</span><span><b>POST /v3/tasks</b> — 批量任务中心：优先级调度、失败重试、死信队列、任务级进度查询</span></li>
+          <li><span class="chk">✓</span><span><b>POST /v3/chunks</b> — 语义切片：层级切片 + token_budget，只把相关片段送给模型，节省上下文</span></li>
+          <li><span class="chk">✓</span><span><b>POST /v3/embeddings</b> — acge 文本向量化：可变输出维度（MRL），C-MTEB 中文榜单第一</span></li>
+          <li><span class="chk">✓</span><span><b>安全合规</b> — App Key 权限隔离、调用级可追溯、支持私有化驻留，数据不出域</span></li>
+        </ul>
+        <button type="button" class="btn btn-primary" data-open="keyModal" style="margin-top:18px">获取 API Key</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ================= CASES ================= -->
+<section id="cases" style="background:var(--bg)">
+  <div class="container">
+    <div class="sec-head center reveal">
+      <span class="sec-tag">Case Studies</span>
+      <h2>企业级落地示意：把分散资料变成可调用的知识底座</h2>
+      <p>以下为产品能力对应的行业实践示意，隐去具体客户名称；不作为真实合作背书。</p>
+    </div>
+    <div class="case-grid">
+      <div class="case-card reveal">
+        <div class="tag">工程机械 · 全球售后</div>
+        <h3>多语种维修手册与图纸知识库</h3>
+        <p>业务横跨制造与海外售后，沉淀了大量多语种服务文档、维修手册与图纸标准，一线调用困难。</p>
+        <ul>
+          <li>能力底座：解析复杂技术文档与图纸，提取标题栏和技术说明</li>
+          <li>多语言：翻译插件处理海外语料，保留表格与标注</li>
+          <li>AI 入口：智能切片接入问答，一线工程师可检索并回溯原文</li>
+        </ul>
+      </div>
+      <div class="case-card reveal">
+        <div class="tag">安防与物联网 · 集团总部</div>
+        <h3>集团统一的文档智能处理底座</h3>
+        <p>内部多业务线、多异构系统，法规、证书、合同与业务资料量大，缺少统一的解析基础设施。</p>
+        <ul>
+          <li>工程化：任务中心扛住大批量并发，运维中心提供全链路监控</li>
+          <li>全域接入：标准 API 与权限隔离，按业务线分别调用</li>
+          <li>持续进化：用样本库和失败案例回流，支持模型迭代</li>
+        </ul>
+      </div>
+    </div>
+    <div class="value-grid reveal" style="margin-top:28px">
+      <div class="value-card"><h3>面向业务部门</h3><p>减少人工整理，提升历史档案与技术资料的复用和流转效率。</p></div>
+      <div class="value-card"><h3>面向 AI / 算法团队</h3><p>为知识库、RAG、Agent 提供高质量、结构化、带语义边界的数据，减少垃圾输入。</p></div>
+      <div class="value-card"><h3>面向 IT 与运维</h3><p>支持私有化部署、API 鉴权管控和全链路监控，调度不再是黑盒。</p></div>
+      <div class="value-card"><h3>面向制造业</h3><p>打通图纸、复杂 BOM、维修手册与多语言资料，把数据孤岛接进业务系统。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section id="faq">
+  <div class="container">
+    <div class="sec-head center reveal">
+      <span class="sec-tag">FAQ</span>
+      <h2>接入前常见问题</h2>
+    </div>
+    <div class="faq-list reveal">
+      <div class="faq-item open">
+        <button type="button" aria-expanded="true">解析结果如何帮我节省大模型 token？</button>
+        <div class="faq-body">打开 compact 与 drop_running_headers 后，输出会去掉页眉页脚、重复表头和空白，并给出语义切片。检索场景下通常只需把相关 chunk 送进模型，而不是整份文档。坐标回溯不受精简影响，审核时仍可定位到原页。</div>
+      </div>
+      <div class="faq-item">
+        <button type="button" aria-expanded="false">支持哪些文件格式？</button>
+        <div class="faq-body">常见办公与扫描件均可：PDF（电子版 / 扫描件）、Word、PPT、Excel / CSV、OFD、图片，以及网页与系统导出件。在线体验支持选择示例或本地选择文件做演示（文件不会上传到服务器）。</div>
+      </div>
+      <div class="faq-item">
+        <button type="button" aria-expanded="false">数据会离开我们的环境吗？</button>
+        <div class="faq-body">云端调用可按 App Key 做权限隔离与审计；对合规要求高的场景提供私有化镜像，数据可驻留在您的内网。本演示站点所有交互均在浏览器本地完成，不会实际上传文件或发送密钥申请。</div>
+      </div>
+      <div class="faq-item">
+        <button type="button" aria-expanded="false">如何确认解析没有对不上的内容？</button>
+        <div class="faq-body">每个标题、段落、表格和实体都带 bbox。在 JSON 与原文回溯视图之间点击即可双向高亮。建议上线前用样本库做抽检，再进入批量任务中心。</div>
+      </div>
+      <div class="faq-item">
+        <button type="button" aria-expanded="false">这个页面上的指标是正式承诺吗？</button>
+        <div class="faq-body">本页是产品能力演示，性能数字、客户规模和对比分数均为示意，不作为合同或 SLA 依据。若需要正式评测集与部署方案，请通过「获取 API Key」留下联系方式，我们再单独沟通。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CTA / FOOTER ================= -->
+<section style="padding-top:20px">
+  <div class="container">
+    <div class="cta reveal">
+      <h2>企业 AI 要稳定落地，先把文档解析好，再把 token 省下来</h2>
+      <p>免费额度每月 1,000 页 · 精简输出与语义切片 · 私有化部署</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative">
+        <a class="btn btn-lg" href="#playground">立即开始解析 →</a>
+        <button type="button" class="btn btn-lg btn-ghost" data-open="keyModal" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.45)">获取 API Key</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <a class="logo" style="margin-bottom:12px"><span class="logo-mark">P1</span>ParseOne</a>
+        <p style="font-size:13px;color:var(--ink-3);max-width:280px">智能文档解析平台 —— 为企业文档构建统一的数据处理底座，打通文档到智能应用的最后一公里。</p>
+      </div>
+      <div><h5>产品</h5><a href="#console">企业控制台</a><a href="#extract">智能抽取</a><a href="#tokens">省 Token</a><a href="#api">开放 API</a></div>
+      <div><h5>解决方案</h5><a href="#scenarios">供应链比价</a><a href="#scenarios">维修知识库</a><a href="#scenarios">档案数字化</a><a href="#cases">落地示意</a></div>
+      <div><h5>资源</h5><a href="#api">API 文档</a><a href="#faq">常见问题</a><button type="button" data-legal="privacy" style="display:block;font-size:13px;color:var(--ink-3);padding:4px 0;background:none;border:0;font:inherit;cursor:pointer;text-align:left">隐私政策</button><button type="button" data-legal="terms" style="display:block;font-size:13px;color:var(--ink-3);padding:4px 0;background:none;border:0;font:inherit;cursor:pointer;text-align:left">服务条款</button></div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 ParseOne AI · 本页面为产品演示 Demo，数据与指标为示意</span>
+      <span>演示站点 · 文件仅在本地处理，不会上传</span>
+    </div>
+  </div>
+</footer>
+
+
+<div class="modal-backdrop" id="keyModal" role="dialog" aria-modal="true" aria-labelledby="keyTitle">
+  <div class="modal">
+    <h3 id="keyTitle">获取演示 API Key</h3>
+    <p class="lead">本页为产品演示，密钥仅在您的浏览器本地生成，不会提交到服务器。</p>
+    <form id="keyForm" novalidate>
+      <div class="field"><label for="kfName">称呼</label><input id="kfName" name="name" autocomplete="name" required><div class="err">请填写称呼</div></div>
+      <div class="field"><label for="kfCompany">公司 / 团队</label><input id="kfCompany" name="company" autocomplete="organization" required><div class="err">请填写公司或团队名称</div></div>
+      <div class="field"><label for="kfEmail">工作邮箱</label><input id="kfEmail" name="email" type="email" autocomplete="email" required><div class="err">请填写有效邮箱</div></div>
+      <div class="field"><label for="kfUse">主要场景</label>
+        <select id="kfUse" name="use" required>
+          <option value="">请选择</option>
+          <option>企业知识库 / RAG</option>
+          <option>供应链比价与图纸</option>
+          <option>财务与年报解析</option>
+          <option>档案数字化</option>
+          <option>其他</option>
+        </select>
+        <div class="err">请选择使用场景</div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="keyModal">取消</button>
+        <button type="submit" class="btn btn-primary">生成演示密钥</button>
+      </div>
+    </form>
+    <div id="keyResult" hidden>
+      <p class="lead" style="margin-top:8px">已在本地生成演示密钥，可复制到下方代码示例中试用页面交互。正式环境请另行申请。</p>
+      <div class="demo-key"><span id="demoKeyVal"></span><button type="button" class="btn btn-ghost" id="copyKey" style="color:#fff;border-color:rgba(255,255,255,.2);padding:4px 10px;font-size:12px">复制</button></div>
+      <div class="modal-actions"><button type="button" class="btn btn-primary" data-close="keyModal">完成</button></div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="legalModal" role="dialog" aria-modal="true" aria-labelledby="legalTitle">
+  <div class="modal">
+    <h3 id="legalTitle">隐私与条款</h3>
+    <div class="legal-body" id="legalBody"></div>
+    <div class="modal-actions"><button type="button" class="btn btn-primary" data-close="legalModal">我知道了</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ================= helpers ================= */
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+
+/* nav scroll state */
+const nav=$('#nav');
+addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>10),{passive:true});
+
+/* reveal on scroll */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+$$('.reveal').forEach(el=>io.observe(el));
+
+/* counters */
+const cio=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting)return;
+  const el=e.target,target=+el.dataset.count,sfx=el.dataset.suffix||'';
+  let t0=null;
+  const step=ts=>{if(!t0)t0=ts;const p=Math.min((ts-t0)/1400,1);
+    el.textContent=Math.floor(target*(1-Math.pow(1-p,3)))+sfx;
+    if(p<1)requestAnimationFrame(step)};
+  requestAnimationFrame(step);cio.unobserve(el);
+}),{threshold:.5});
+$$('[data-count]').forEach(el=>cio.observe(el));
+
+/* hero region cycling */
+const rbs=['rb1','rb2','rb3','rb4'];let rbI=0;
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduceMotion){rbs.forEach(id=>$('#'+id).classList.add('show'))}
+else{
+  setInterval(()=>{rbs.forEach(id=>$('#'+id).classList.remove('show'));$('#'+rbs[rbI]).classList.add('show');rbI=(rbI+1)%rbs.length},1600);
+  setTimeout(()=>$('#'+rbs[0]).classList.add('show'),700);
+}
+
+/* ================= Engine 1: reading order ================= */
+const RO_SETS={
+  '2col':{blocks:[
+    {l:4,t:2,w:92,h:14,label:'页眉',gray:true},
+    {l:4,t:22,w:44,h:26},{l:52,t:22,w:44,h:26},
+    {l:4,t:52,w:44,h:32},{l:52,t:52,w:44,h:32},
+    {l:4,t:88,w:44,h:32},{l:52,t:88,w:44,h:32},
+    {l:4,t:124,w:44,h:32},{l:52,t:124,w:44,h:32},
+  ],order:[1,2,3,4,5,6,7,8],skip:[0],hint:'双栏论文：先左栏 1→4，再右栏 5→8，页眉自动剔除'},
+  '2colT':{blocks:[
+    {l:4,t:2,w:92,h:14,label:'页眉',gray:true},
+    {l:4,t:22,w:44,h:26},{l:52,t:22,w:44,h:26},
+    {l:4,t:52,w:44,h:30},{l:52,t:52,w:44,h:62,label:'插图 Fig.1',fig:true},
+    {l:4,t:86,w:44,h:32},{l:52,t:118,w:44,h:32},
+    {l:4,t:122,w:44,h:32},
+  ],order:[1,2,3,5,6,7,4],skip:[0],hint:'双栏 + 插图：算法判定插图属于右栏上下文，插序还原为 1→2→3→(图)→5→6→4'},
+};
+let roTimer=null;
+function renderRO(key){
+  const set=RO_SETS[key],lay=$('#roLayout');
+  lay.innerHTML='';
+  const els=set.blocks.map((b,i)=>{
+    const d=document.createElement('div');
+    d.className='ro-block';
+    d.style.cssText=`left:${b.l}%;top:${b.t}px;width:${b.w}%;height:${b.h}px;--cbd:${b.gray?'#e2e8f0':b.fig?'#93c5fd':'#cbd5e1'}`;
+    d.textContent=b.label||(set.order.indexOf(i)>=0?set.order.indexOf(i)+1:'');
+    d.dataset.idx=i;
+    lay.appendChild(d);return d;
+  });
+  clearInterval(roTimer);
+  let step=0;
+  const run=()=>{
+    els.forEach(e=>e.classList.remove('seg'));
+    step=0;
+    roTimer=setInterval(()=>{
+      const seq=set.order[step];
+      if(seq===undefined||els[seq]===undefined){clearInterval(roTimer);return}
+      els[seq].classList.add('seg');step++;
+      if(step>=set.order.length)clearInterval(roTimer);
+    },520);
+  };
+  run();$('#roHint').textContent='▶ '+set.hint;
+}
+renderRO('2col');
+$$('[data-ro]').forEach(b=>b.addEventListener('click',()=>{
+  $$('[data-ro]').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderRO(b.dataset.ro);
+}));
+
+/* ================= Engine 2: table hover logic ================= */
+const tblMsgs=[
+ '标题行：AI 判定为多级表头，自动提升为列定义',
+ '合并单元格：colspan=4 → 还原为分组行「收入」',
+ '无线表：无边框区域由空白对齐推断出列边界',
+ '跨页表头：下一页重复表头被识别并自动拼接',
+];
+$$('#cmpTable tr').forEach((tr,i)=>{
+  tr.addEventListener('mouseenter',()=>{
+    $$('#cmpTable td').forEach(td=>td.classList.remove('hl-cell'));
+    if(tblMsgs[i-1]){$$('#cmpTable td').forEach(td=>td.classList.remove('hl-cell'));tr.querySelectorAll('td,th').forEach(td=>td.classList.add('hl-cell'))}
+    const note=$('.tbl-note span');if(note&&tblMsgs[i-1])note.textContent=tblMsgs[i-1];
+  });
+  tr.addEventListener('mouseleave',()=>{
+    $$('#cmpTable td, #cmpTable th').forEach(td=>td.classList.remove('hl-cell'));
+    const note=$('.tbl-note span');if(note)note.textContent='悬停查看还原逻辑';
+  });
+});
+
+/* ================= Engine 3: catalog tree ================= */
+const TREE=[
+ {k:'2026 年年度报告',lvl:1,open:true,kids:[
+   {k:'第三章 · 管理层讨论与分析',lvl:2,open:true,kids:[
+     {k:'（一）主营业务与经营情况',lvl:3},
+     {k:'（二）分产品经营数据',lvl:3},
+     {k:'（三）研发投入情况',lvl:3},
+   ]},
+   {k:'第四章 · 公司治理',lvl:2,open:false,kids:[
+     {k:'股东大会情况',lvl:3},{k:'董监高变动',lvl:3},
+   ]},
+   {k:'第五章 · 财务报告',lvl:2,open:true,kids:[
+     {k:'合并资产负债表',lvl:3},{k:'合并利润表',lvl:3},
+   ]},
+ ]},
+];
+function buildTree(nodes,root){
+  nodes.forEach(n=>{
+    const row=document.createElement('div');row.className='node';
+    row.innerHTML=`<span class="caret ${n.open?'open':''}">▸</span><span class="t-key">${'  '.repeat(0)}${n.k}</span><span style="color:#94a3b8;font-size:10px"> · H${n.lvl}</span>`;
+    root.appendChild(row);
+    if(n.kids){
+      const kids=document.createElement('div');kids.className='kids'+(n.open?'':' closed');
+      row.addEventListener('click',()=>{
+        kids.classList.toggle('closed');
+        row.querySelector('.caret').classList.toggle('open');
+      });
+      row.appendChild(kids);buildTree(n.kids,kids);
+    }
+  });
+}
+buildTree(TREE,$('#docTree'));
+
+/* ================= benchmark bars ================= */
+const bio=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting)return;
+  e.target.querySelectorAll('.bar-fill').forEach((f,i)=>{
+    const row=f.closest('.bar-row');
+    setTimeout(()=>f.style.width=row.dataset.v+'%',i*90);
+  });bio.unobserve(e.target);
+}),{threshold:.3});
+bio.observe($('#benchBars'));
+
+/* ================= API tabs ================= */
+$$('.api-tabs button').forEach(b=>b.addEventListener('click',()=>{
+  $$('.api-tabs button').forEach(x=>x.classList.remove('active'));
+  $$('.api-code pre').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  $(`.api-code pre[data-lang="${b.dataset.lang}"]`).classList.add('active');
+}));
+
+/* ================= Token viz bars ================= */
+(function(){
+  const box=document.querySelector('.token-viz');
+  if(!box)return;
+  const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(!e.isIntersecting)return;
+    box.querySelectorAll('.bar-fill[data-tk]').forEach((f,i)=>{
+      setTimeout(()=>f.style.width=f.dataset.tk+'%',i*90);
+    });
+    io.unobserve(e.target);
+  }),{threshold:.3});
+  io.observe(box);
+})();
+
+/* ================= Mobile nav ================= */
+(function(){
+  const burger=$('#navBurger'), drawer=$('#mobileDrawer');
+  if(!burger||!drawer)return;
+  const close=()=>{burger.setAttribute('aria-expanded','false');drawer.classList.remove('open')};
+  burger.addEventListener('click',()=>{
+    const open=burger.getAttribute('aria-expanded')==='true';
+    burger.setAttribute('aria-expanded',String(!open));
+    drawer.classList.toggle('open',!open);
+  });
+  drawer.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));
+  addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+})();
+
+/* ================= Toast / Modal ================= */
+function toast(msg){
+  const t=$('#toast');if(!t)return;
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function openModal(id){
+  const m=document.getElementById(id);if(!m)return;
+  m.classList.add('open');
+  const focus=m.querySelector('input,button,select,textarea');
+  if(focus)setTimeout(()=>focus.focus(),50);
+}
+function closeModal(id){
+  const m=document.getElementById(id);if(!m)return;
+  m.classList.remove('open');
+}
+$$('[data-open]').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.open)));
+$$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+$$('.modal-backdrop').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)closeModal(b.id)}));
+addEventListener('keydown',e=>{if(e.key==='Escape')$$('.modal-backdrop.open').forEach(m=>closeModal(m.id))});
+
+/* ================= API copy ================= */
+(function(){
+  const btn=$('#copyApi');
+  if(!btn)return;
+  btn.addEventListener('click',()=>{
+    const pre=$('.api-code pre.active');
+    const text=pre?pre.innerText:'';
+    navigator.clipboard.writeText(text).then(()=>{btn.textContent='已复制';toast('代码已复制');setTimeout(()=>btn.textContent='复制',1500)}).catch(()=>toast('复制失败，请手动选择'));
+  });
+})();
+
+/* ================= API Key form ================= */
+(function(){
+  const form=$('#keyForm'), result=$('#keyResult');
+  if(!form)return;
+  const emailOk=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  form.addEventListener('submit',e=>{
+    e.preventDefault();
+    let ok=true;
+    [['kfName',v=>v.trim().length>=1],['kfCompany',v=>v.trim().length>=1],['kfEmail',emailOk],['kfUse',v=>!!v]].forEach(([id,fn])=>{
+      const input=document.getElementById(id);
+      const field=input.closest('.field');
+      const valid=fn(input.value);
+      field.classList.toggle('invalid',!valid);
+      if(!valid)ok=false;
+    });
+    if(!ok)return;
+    const key='sk-demo-'+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10);
+    try{localStorage.setItem('parseone_demo_key',key)}catch(_){}
+    $('#demoKeyVal').textContent=key;
+    form.hidden=true;result.hidden=false;
+    toast('演示密钥已生成（仅保存在本机）');
+  });
+  $('#copyKey')?.addEventListener('click',()=>{
+    const v=$('#demoKeyVal').textContent;
+    navigator.clipboard.writeText(v).then(()=>toast('密钥已复制')).catch(()=>toast('复制失败'));
+  });
+})();
+
+/* ================= Legal ================= */
+const LEGAL={
+  privacy:`<h4>隐私政策（演示说明）</h4><p>本页面为 ParseOne 产品能力演示。在线体验中选择的本地文件只在您的浏览器中读取文件名与大小，用于生成示意解析结果，不会上传到任何服务器。</p><p>「获取 API Key」表单内容同样只在本地校验，演示密钥保存在浏览器 localStorage，可随时清除站点数据删除。</p><p>若后续接入正式服务，将另行提供完整的隐私政策与数据处理协议。</p>`,
+  terms:`<h4>服务条款（演示说明）</h4><p>本页展示的功能、性能数字、对比分数和客户规模均为示意，不构成要约、合同条款或 SLA 承诺。</p><p>演示密钥不能调用真实 ParseOne API。正式商用、私有化部署与数据安全条款需另行签署。</p>`
+};
+$$('[data-legal]').forEach(b=>b.addEventListener('click',()=>{
+  $('#legalTitle').textContent=b.dataset.legal==='privacy'?'隐私政策':'服务条款';
+  $('#legalBody').innerHTML=LEGAL[b.dataset.legal];
+  openModal('legalModal');
+}));
+
+/* ================= FAQ ================= */
+$$('.faq-item button').forEach(btn=>btn.addEventListener('click',()=>{
+  const item=btn.closest('.faq-item');
+  const open=!item.classList.contains('open');
+  $$('.faq-item').forEach(it=>{it.classList.remove('open');it.querySelector('button').setAttribute('aria-expanded','false')});
+  if(open){item.classList.add('open');btn.setAttribute('aria-expanded','true')}
+}));
+
+/* ================= Playground ================= */
+function estimateTokens(text){
+  const s=String(text||'');
+  const cjk=(s.match(/[\u4e00-\u9fff]/g)||[]).length;
+  const other=Math.max(0,s.length-cjk);
+  return Math.max(1,Math.ceil(cjk/1.5+other/4));
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const DOCS={
+  report:{
+    ext:'PDF',name:'年度报告_节选.pdf',meta:'· 1 页 · 扫描件 300dpi',
+    raw:`XX科技股份有限公司  2026年年度报告        第 87 页
+机密 · 内部资料 · 请勿外传
+————————————————————————
+2026 年年度报告（节选）
+第三章 · 管理层讨论与分析
+（一）主营业务与经营情况
+报告期内，公司围绕智能文字识别与商业大数据双主线持续投入，全年实现营业收入 9.02 亿元，同比增长 31.4%。其中海外业务收入占比首次突破 18%，覆盖 200 余个国家和地区。
+（二）分产品经营数据
+分产品        营业收入        同比增速        毛利率
+智能识别      4.52 亿元       +38.2%          71.2%
+大数据服务    2.87 亿元       +22.4%          63.5%
+文档云        1.63 亿元       +45.1%          58.9%
+研发投入合计 1.84 亿元，占营业收入比例 20.4%；新增发明专利授权 23 项，累计 117 项。
+XX科技股份有限公司  2026年年度报告        第 87 页`,
+    compactMd:`<h1>2026 年年度报告（节选）</h1>
+<h2>第三章 · 管理层讨论与分析</h2>
+<h3 style="font-size:14px;margin:10px 0 6px;color:var(--ink-2)">（一）主营业务与经营情况</h3>
+<p>报告期内，公司围绕智能文字识别与商业大数据双主线持续投入，全年实现营业收入 <b>9.02 亿元</b>，同比增长 31.4%。其中海外业务收入占比首次突破 <b>18%</b>，覆盖 200 余个国家和地区。</p>
+<h3 style="font-size:14px;margin:14px 0 6px;color:var(--ink-2)">（二）分产品经营数据</h3>
+<table><tr><th>分产品</th><th>营业收入</th><th>同比增速</th><th>毛利率</th></tr>
+<tr><td>智能识别</td><td>4.52 亿元</td><td>+38.2%</td><td>71.2%</td></tr>
+<tr><td>大数据服务</td><td>2.87 亿元</td><td>+22.4%</td><td>63.5%</td></tr>
+<tr><td>文档云</td><td>1.63 亿元</td><td>+45.1%</td><td>58.9%</td></tr></table>
+<p>研发投入合计 <span class="fm">1.84 亿元</span>，占营业收入比例 <span class="fm">20.4%</span>；新增发明专利授权 <span class="fm">23</span> 项，累计 <span class="fm">117</span> 项。</p>`,
+    compactText:`# 2026 年年度报告（节选）
+## 第三章 · 管理层讨论与分析
+### （一）主营业务与经营情况
+报告期内，公司围绕智能文字识别与商业大数据双主线持续投入，全年实现营业收入 9.02 亿元，同比增长 31.4%。其中海外业务收入占比首次突破 18%，覆盖 200 余个国家和地区。
+### （二）分产品经营数据
+| 分产品 | 营业收入 | 同比增速 | 毛利率 |
+| --- | --- | --- | --- |
+| 智能识别 | 4.52 亿元 | +38.2% | 71.2% |
+| 大数据服务 | 2.87 亿元 | +22.4% | 63.5% |
+| 文档云 | 1.63 亿元 | +45.1% | 58.9% |
+研发投入合计 1.84 亿元，占营业收入比例 20.4%；新增发明专利授权 23 项，累计 117 项。`,
+    json:{document_id:'doc_9f2ac31b',title:'2026 年年度报告（节选）',metadata:{page_count:1,dpi:300,lang:'zh-CN',compact:true},
+      catalog:[{heading_level:1,content:'2026 年年度报告（节选）'},{heading_level:2,content:'第三章 · 管理层讨论与分析'},{heading_level:3,content:'（一）主营业务与经营情况'}],
+      paragraphs:[{id:'p_01',reading_order:2,content:'报告期内，公司围绕智能文字识别与商业大数据双主线…营业收入 9.02 亿元，同比增长 31.4%。',bbox:[52,188,543,262]}],
+      tables:[{id:'t_01',type:'borderless',header:['分产品','营业收入','同比增速','毛利率'],rows:[['智能识别','4.52 亿元','+38.2%','71.2%'],['大数据服务','2.87 亿元','+22.4%','63.5%'],['文档云','1.63 亿元','+45.1%','58.9%']],bbox:[52,290,543,420]}],
+      entities:[{type:'money',value:902000000,unit:'CNY',source:'p_01'},{type:'percent',value:0.314,source:'p_01'}],
+      token_usage:{raw:0,compact:0}},
+    chunks:[
+      {title:'Chunk 1 · 经营概况',text:'2026 年年度报告（节选） / 第三章。报告期内营业收入 9.02 亿元，同比增长 31.4%；海外业务收入占比突破 18%。'},
+      {title:'Chunk 2 · 分产品数据',text:'智能识别 4.52 亿元（+38.2%，毛利率 71.2%）；大数据服务 2.87 亿元（+22.4%，63.5%）；文档云 1.63 亿元（+45.1%，58.9%）。'},
+      {title:'Chunk 3 · 研发投入',text:'研发投入合计 1.84 亿元，占营业收入 20.4%；新增发明专利授权 23 项，累计 117 项。'}
+    ],
+    traceTitle:'2026 年年度报告（节选）',
+    traceBody:`<div class="trace-h2">第三章 · 管理层讨论与分析</div>
+<div class="trace-h2" style="font-weight:600;color:var(--ink-2)">（一）主营业务与经营情况</div>
+<div class="trace-p">报告期内，公司围绕智能文字识别与商业大数据双主线持续投入，全年实现营业收入 9.02 亿元，同比增长 31.4%。其中海外业务收入占比首次突破 18%，覆盖 200 余个国家和地区。</div>
+<div class="trace-h2" style="font-weight:600;color:var(--ink-2)">（二）分产品经营数据</div>
+<table class="trace-table"><tr><th>分产品</th><th>营业收入</th><th>同比</th><th>毛利率</th></tr>
+<tr><td>智能识别</td><td>4.52 亿元</td><td>+38.2%</td><td>71.2%</td></tr>
+<tr><td>大数据服务</td><td>2.87 亿元</td><td>+22.4%</td><td>63.5%</td></tr>
+<tr><td>文档云</td><td>1.63 亿元</td><td>+45.1%</td><td>58.9%</td></tr></table>
+<div class="trace-p">研发投入合计 1.84 亿元，占营业收入比例 20.4%；新增发明专利授权 23 项，累计 117 项。</div>`,
+    logs:[
+      ['图像增强: deskew 0.8°, 去噪 radius=1.2','分辨率归一: 300dpi · 灰度化'],
+      ['Layout-Engine 2.0: 检出 6 个区域','元素: title×1, heading×3, paragraph×2, table×1'],
+      ['识别语言: zh-CN (置信度 98.7%)','页眉/页脚/密级水印已标记为噪音'],
+      ['表格 t_01: 类型=无线表','列边界推断: 4 列 · 文本全对率 0.96'],
+      ['标题层级: H1×1, H2×1, H3×2','阅读顺序已重建'],
+      ['剔除页眉页脚与重复页码，精简比约 45%','语义切片: 3 chunks · bbox 6/6 已绑定']
+    ]
+  },
+  quote:{
+    ext:'XLS',name:'供应商报价单_V3.xlsx',meta:'· 2 页 · 多级表头',
+    raw:`报价单（内部联）页眉 报价单（内部联）页眉
+XX 精密制造 供应商报价单 V3            第 1 页
+项目编号: RFQ-2026-118
+供应商: 南方工装有限公司
+物料编码    名称          规格          数量    单价(含税)    交期
+JG-104      夹具底座      45#钢 / 自制    20     860.00       15天
+JG-104-A    定位销        φ8×H12          80      12.50       7天
+JG-210      压板组件      含螺栓          40     145.00       12天
+图纸编号 DWG-618 见附件，加工要求：去毛刺、发黑、公差按 IT7。
+XX 精密制造 供应商报价单 V3            第 2 页
+物料编码    名称          规格          数量    单价(含税)    交期
+BOM 合计（含税）                                26,200.00
+备注：运费另计，有效期 30 天。
+XX 精密制造 供应商报价单 V3            第 2 页`,
+    compactMd:`<h1>供应商报价单 V3</h1>
+<p>项目编号 <span class="fm">RFQ-2026-118</span> · 供应商：南方工装有限公司</p>
+<table><tr><th>物料编码</th><th>名称</th><th>规格</th><th>数量</th><th>单价（含税）</th><th>交期</th></tr>
+<tr><td>JG-104</td><td>夹具底座</td><td>45#钢 / 自制</td><td>20</td><td>860.00</td><td>15 天</td></tr>
+<tr><td>JG-104-A</td><td>定位销</td><td>φ8×H12</td><td>80</td><td>12.50</td><td>7 天</td></tr>
+<tr><td>JG-210</td><td>压板组件</td><td>含螺栓</td><td>40</td><td>145.00</td><td>12 天</td></tr>
+<tr><td colspan="4">BOM 合计（含税）</td><td>26,200.00</td><td></td></tr></table>
+<p>图纸 <span class="fm">DWG-618</span>：去毛刺、发黑，公差按 IT7。运费另计，报价有效期 30 天。</p>`,
+    compactText:`# 供应商报价单 V3
+项目编号 RFQ-2026-118 · 供应商：南方工装有限公司
+| 物料编码 | 名称 | 规格 | 数量 | 单价（含税） | 交期 |
+| --- | --- | --- | --- | --- | --- |
+| JG-104 | 夹具底座 | 45#钢 / 自制 | 20 | 860.00 | 15 天 |
+| JG-104-A | 定位销 | φ8×H12 | 80 | 12.50 | 7 天 |
+| JG-210 | 压板组件 | 含螺栓 | 40 | 145.00 | 12 天 |
+| BOM 合计（含税） |  |  |  | 26,200.00 |  |
+图纸 DWG-618：去毛刺、发黑，公差按 IT7。运费另计，报价有效期 30 天。`,
+    json:{document_id:'doc_rfq_118',title:'供应商报价单 V3',metadata:{page_count:2,lang:'zh-CN',compact:true},
+      catalog:[{heading_level:1,content:'供应商报价单 V3'}],
+      paragraphs:[{id:'p_01',reading_order:1,content:'项目编号 RFQ-2026-118，供应商南方工装有限公司。图纸 DWG-618，加工要求去毛刺、发黑、公差 IT7。',bbox:[40,60,540,120]}],
+      tables:[{id:'t_01',type:'crossed_page',header:['物料编码','名称','规格','数量','单价（含税）','交期'],rows:[['JG-104','夹具底座','45#钢 / 自制','20','860.00','15 天'],['JG-104-A','定位销','φ8×H12','80','12.50','7 天'],['JG-210','压板组件','含螺栓','40','145.00','12 天']],bbox:[40,140,540,360]}],
+      entities:[{type:'money',value:26200,unit:'CNY',source:'t_01'},{type:'id',value:'RFQ-2026-118',source:'p_01'}]},
+    chunks:[
+      {title:'Chunk 1 · 单据头',text:'供应商报价单 V3，项目 RFQ-2026-118，供应商南方工装有限公司。'},
+      {title:'Chunk 2 · 物料明细',text:'JG-104 夹具底座 20×860.00；JG-104-A 定位销 80×12.50；JG-210 压板组件 40×145.00。含税合计 26,200.00。'},
+      {title:'Chunk 3 · 工艺与条款',text:'图纸 DWG-618：去毛刺、发黑，公差 IT7。运费另计，有效期 30 天。'}
+    ],
+    traceTitle:'供应商报价单 V3',
+    traceBody:`<div class="trace-p">项目编号 RFQ-2026-118 · 供应商：南方工装有限公司</div>
+<table class="trace-table"><tr><th>物料编码</th><th>名称</th><th>规格</th><th>数量</th><th>单价</th><th>交期</th></tr>
+<tr><td>JG-104</td><td>夹具底座</td><td>45#钢 / 自制</td><td>20</td><td>860.00</td><td>15 天</td></tr>
+<tr><td>JG-104-A</td><td>定位销</td><td>φ8×H12</td><td>80</td><td>12.50</td><td>7 天</td></tr>
+<tr><td>JG-210</td><td>压板组件</td><td>含螺栓</td><td>40</td><td>145.00</td><td>12 天</td></tr>
+<tr><td colspan="4">BOM 合计（含税）</td><td>26,200.00</td><td></td></tr></table>
+<div class="trace-p">图纸 DWG-618：去毛刺、发黑，公差按 IT7。运费另计，有效期 30 天。</div>`,
+    logs:[
+      ['检测到工作表 1 张，打印区域跨 2 页','无需纠偏（电子表格）'],
+      ['版面: 表头冻结行 + 跨页重复表头','元素: heading×1, table×1, paragraph×2'],
+      ['单元格文本抽取完成，语言 zh-CN','页眉「报价单（内部联）」已标记为噪音'],
+      ['跨页表头去重并纵向拼接','合并单元格「BOM 合计」已还原 · 3 行明细'],
+      ['目录树: 单据头 / 明细 / 条款','阅读顺序按行优先重建'],
+      ['重复表头已删除，精简比约 40%+','语义切片: 3 chunks · 金额实体已绑定']
+    ]
+  },
+  manual:{
+    ext:'PDF',name:'设备维修手册_CH2.pdf',meta:'· 6 页 · 双栏 + 插图',
+    raw:`HQA SERVICE MANUAL  CONFIDENTIAL          Page 12
+2.4 常见故障排查
+若开机无显示，请先检查电源开关与保险丝 F1。不要拆开高压仓。
+2.4.1 电源单元
+现象：面板无指示。步骤：1) 确认 220V 输入 2) 测量 F1 若开路则更换 3) 检查开关电源输出 24V。
+HQA SERVICE MANUAL  CONFIDENTIAL          Page 13
+2.4.2 功放保护
+保护灯常亮时，先断开负载，检查喇叭线是否短路，再查看功放模块过温保护。
+更换模块后需重新做增益校准，详见第 4 章。
+HQA SERVICE MANUAL  CONFIDENTIAL          Page 13`,
+    compactMd:`<h1>2.4 常见故障排查</h1>
+<p>若开机无显示，请先检查电源开关与保险丝 <span class="fm">F1</span>。不要拆开高压仓。</p>
+<h2>2.4.1 电源单元</h2>
+<p><b>现象</b>：面板无指示。</p>
+<p><b>步骤</b>：1) 确认 220V 输入；2) 测量 F1，开路则更换；3) 检查开关电源输出 24V。</p>
+<h2>2.4.2 功放保护</h2>
+<p>保护灯常亮时，先断开负载，检查喇叭线是否短路，再查看功放模块过温保护。更换模块后需重新做增益校准，详见第 4 章。</p>`,
+    compactText:`# 2.4 常见故障排查
+若开机无显示，请先检查电源开关与保险丝 F1。不要拆开高压仓。
+## 2.4.1 电源单元
+现象：面板无指示。
+步骤：1) 确认 220V 输入；2) 测量 F1，开路则更换；3) 检查开关电源输出 24V。
+## 2.4.2 功放保护
+保护灯常亮时，先断开负载，检查喇叭线是否短路，再查看功放模块过温保护。更换模块后需重新做增益校准，详见第 4 章。`,
+    json:{document_id:'doc_svc_ch2',title:'2.4 常见故障排查',metadata:{page_count:6,lang:'zh-CN',layout:'two_column',compact:true},
+      catalog:[{heading_level:2,content:'2.4 常见故障排查'},{heading_level:3,content:'2.4.1 电源单元'},{heading_level:3,content:'2.4.2 功放保护'}],
+      paragraphs:[{id:'p_01',reading_order:1,content:'若开机无显示，请先检查电源开关与保险丝 F1。不要拆开高压仓。',bbox:[48,80,300,140]}],
+      tables:[],
+      entities:[{type:'part',value:'F1',source:'p_01'},{type:'voltage',value:'24V',source:'p_02'}]},
+    chunks:[
+      {title:'Chunk 1 · 总则',text:'2.4 常见故障排查：开机无显示时先检查电源开关与保险丝 F1，禁止拆开高压仓。'},
+      {title:'Chunk 2 · 电源单元',text:'2.4.1 面板无指示：确认 220V 输入，测量并更换开路的 F1，检查开关电源 24V 输出。'},
+      {title:'Chunk 3 · 功放保护',text:'2.4.2 保护灯常亮：断开负载，检查喇叭线短路与模块过温；更换后按第 4 章做增益校准。'}
+    ],
+    traceTitle:'2.4 常见故障排查',
+    traceBody:`<div class="trace-p">若开机无显示，请先检查电源开关与保险丝 F1。不要拆开高压仓。</div>
+<div class="trace-h2">2.4.1 电源单元</div>
+<div class="trace-p">现象：面板无指示。步骤：1) 确认 220V 输入；2) 测量 F1，开路则更换；3) 检查开关电源输出 24V。</div>
+<div class="trace-h2">2.4.2 功放保护</div>
+<div class="trace-p">保护灯常亮时，先断开负载，检查喇叭线是否短路，再查看功放模块过温保护。更换模块后需重新做增益校准，详见第 4 章。</div>`,
+    logs:[
+      ['扫描件 6 页，双栏版面已识别','去噪 + 纠偏完成'],
+      ['Layout-Engine: 跨栏插图归属右栏上下文','元素: heading×3, paragraph×4, figure×1'],
+      ['识别语言: zh-CN (97.9%)','页眉 CONFIDENTIAL / 页码已标记为噪音'],
+      ['本段无线表 0，零件号 F1 / 电压 24V 已抽取','插图题注已绑定'],
+      ['目录树按 2.4 / 2.4.1 / 2.4.2 构建','双栏阅读顺序已还原'],
+      ['剔除重复页眉后精简约 50%','语义切片: 3 chunks，便于一线检索']
+    ]
+  }
+};
+
+function makeUploadDoc(file){
+  const ext=(file.name.split('.').pop()||'FILE').toUpperCase();
+  const kb=Math.max(1,Math.round(file.size/1024));
+  const pages=Math.max(1,Math.min(24,Math.round(kb/80)||1));
+  const raw=(file.name+' 文档页眉 第 1 页\n').repeat(3)+
+    `${file.name}（本地演示解析）\n本文档约 ${kb} KB、估 ${pages} 页。演示模式下不会读取文件内容或上传到服务器，仅根据文件名与体积生成示意结果。\n建议结构：标题、摘要、表格或步骤说明。\n`+
+    (file.name+' 文档页脚 第 1 页\n').repeat(3);
+  const compactText=`# ${file.name}\n\n本地演示解析（未上传文件内容）。\n\n- 文件大小：${kb} KB\n- 估计页数：${pages} 页\n- 建议输出：精简 Markdown + 语义切片，剔除页眉页脚后再送入模型。`;
+  const compactMd=`<h1>${escapeHtml(file.name)}</h1><p>本地演示解析（<b>未上传、未读取文件内容</b>）。系统按文件名与体积生成示意结果，便于查看精简与 token 对比。</p><table><tr><th>项目</th><th>值</th></tr><tr><td>大小</td><td>${kb} KB</td></tr><tr><td>估计页数</td><td>${pages}</td></tr></table><p>正式环境将输出可回溯的 Markdown / JSON，并按 compact 与 token_budget 控制送模长度。</p>`;
+  return {
+    ext:ext.slice(0,4),name:file.name,meta:`· 本地文件 ${kb} KB · 未上传`,
+    raw,compactMd,compactText,
+    json:{document_id:'doc_local_demo',title:file.name,metadata:{bytes:file.size,pages,lang:'zh-CN',demo:true,compact:true},paragraphs:[{id:'p_01',content:'本地演示，未读取文件内容。',bbox:[40,80,520,140]}],tables:[],entities:[]},
+    chunks:[
+      {title:'Chunk 1 · 文档信息',text:`${file.name}，约 ${kb} KB / ${pages} 页。此为本地演示结果。`},
+      {title:'Chunk 2 · 接入建议',text:'正式解析请走 API 或私有化引擎，开启 compact 与语义切片以节省 token。'}
+    ],
+    traceTitle:file.name,
+    traceBody:`<div class="trace-p">本地演示：仅使用文件名与大小生成示意结果，文件没有离开您的电脑。</div><div class="trace-p">大小 ${kb} KB，估计 ${pages} 页。</div>`,
+    logs:[
+      [`已选择本地文件 ${file.name} (${kb} KB)`,'演示模式: 不读取二进制内容，不上传'],
+      ['按扩展名模拟版面分析','示意区域: title、paragraph、table'],
+      ['跳过真实 OCR（演示）','页眉页脚将在精简阶段剔除'],
+      ['示意表格结构已生成','合并单元格逻辑可在示例文档中查看'],
+      ['目录树: 文档信息 / 接入建议','阅读顺序按单栏处理'],
+      ['精简输出已准备，可对比 token','bbox 为示意坐标']
+    ]
+  };
+}
+
+let currentDoc=DOCS.report;
+let currentKey='report';
+let outputMode='compact';
+let viewMode='md';
+let parsed=false;
+let pgTimer=null;
+
+const stageEls=$$('.stage'),logEl=$('#pgLog'),runBtn=$('#runBtn'),resetBtn=$('#resetBtn');
+const views={md:$('#viewMd'),json:$('#viewJson'),trace:$('#viewTrace'),chunk:$('#viewChunk')};
+
+function bindTraceJson(){
+  $$('#viewJson .jrow').forEach(row=>row.addEventListener('click',()=>{
+    if(!parsed)return;
+    $$('#viewJson .jrow').forEach(r=>r.classList.remove('hl'));
+    $$('.trace-region').forEach(r=>r.classList.remove('on'));
+    row.classList.add('hl');
+    const region=document.querySelector(`.trace-region[data-r="${row.dataset.r}"]`);
+    if(region){region.classList.add('on');showView('trace');}
+  }));
+  $$('.trace-region').forEach(reg=>{
+    reg.style.pointerEvents='auto';
+    reg.addEventListener('click',()=>{
+      if(!parsed)return;
+      $$('#viewJson .jrow').forEach(r=>r.classList.remove('hl'));
+      $$('.trace-region').forEach(r=>r.classList.toggle('on',r===reg));
+      $$(`.jrow[data-r="${reg.dataset.r}"]`).forEach(r=>r.classList.add('hl'));
+    });
+  });
+}
+
+function renderJson(doc){
+  const j=Object.assign({},doc.json,{token_usage:{raw:estimateTokens(doc.raw),compact:estimateTokens(doc.compactText)}});
+  const rows=[
+    ['r1',`  <span class="jk">"document_id"</span>: <span class="js">"${escapeHtml(j.document_id)}"</span>,`],
+    ['r1',`  <span class="jk">"title"</span>: <span class="js">"${escapeHtml(j.title)}"</span>,`],
+    ['r1',`  <span class="jk">"metadata"</span>: ${escapeHtml(JSON.stringify(j.metadata))},`],
+    ['r2',`  <span class="jk">"catalog"</span>: ${escapeHtml(JSON.stringify(j.catalog||[]))},`],
+    ['r3',`  <span class="jk">"paragraphs"</span>: ${escapeHtml(JSON.stringify(j.paragraphs||[]))},`],
+    ['r4',`  <span class="jk">"tables"</span>: ${escapeHtml(JSON.stringify(j.tables||[]))},`],
+    ['r5',`  <span class="jk">"entities"</span>: ${escapeHtml(JSON.stringify(j.entities||[]))},`],
+    ['r5',`  <span class="jk">"token_usage"</span>: { <span class="jk">"raw"</span>: <span class="jn">${j.token_usage.raw}</span>, <span class="jk">"compact"</span>: <span class="jn">${j.token_usage.compact}</span> }`]
+  ];
+  $('#viewJson').innerHTML='<span class="jp">{</span>'+rows.map(([r,html])=>`<span class="jrow" data-r="${r}">${html}</span>`).join('')+'<span class="jp">}</span>';
+}
+
+function renderTrace(doc){
+  $('#viewTrace').innerHTML=`<div class="trace-page" id="tracePage">
+    <div class="trace-badge">精简已启用 · 可点击回溯</div>
+    <div style="text-align:center"><div class="trace-title">${escapeHtml(doc.traceTitle)}</div></div>
+    ${doc.traceBody}
+    <div class="trace-region" data-r="r1" style="top:24px;left:26px;right:26px;height:28px"><span class="lbl">标题</span></div>
+    <div class="trace-region" data-r="r2" style="top:58px;left:26px;right:26px;height:36px"><span class="lbl">目录 / 元信息</span></div>
+    <div class="trace-region" data-r="r3" style="top:100px;left:26px;right:26px;height:70px"><span class="lbl">段落</span></div>
+    <div class="trace-region" data-r="r4" style="top:176px;left:26px;right:26px;height:130px"><span class="lbl">表格 / 主体</span></div>
+    <div class="trace-region" data-r="r5" style="top:314px;left:26px;right:26px;height:50px"><span class="lbl">实体 / 条款</span></div>
+  </div>
+  <div style="text-align:center;font-size:12px;color:var(--ink-3);margin-top:12px">在 JSON 视图点击字段，或直接点本页色块，可双向回溯定位</div>`;
+}
+
+function renderChunks(doc){
+  $('#viewChunk').innerHTML=doc.chunks.map((c,i)=>{
+    const tk=estimateTokens(c.text);
+    return `<div class="chunk-card"><header><b>${escapeHtml(c.title)}</b><span>约 ${tk} tokens</span></header><p>${escapeHtml(c.text)}</p></div>`;
+  }).join('');
+}
+
+function renderMd(doc){
+  if(outputMode==='full'){
+    $('#viewMd').innerHTML=`<h1>全量识别（含版式噪音）</h1><p style="white-space:pre-wrap;font-family:var(--mono);font-size:12.5px;color:var(--ink-2);background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px">${escapeHtml(doc.raw)}</p><div style="margin-top:14px;padding:10px 14px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;font-size:12.5px;color:#9a3412">完整输出保留页眉、页脚与重复表头，占用更多 token，适合校对原文；接入模型请改用「精简输出」或「语义切片」。</div>`;
+  }else{
+    $('#viewMd').innerHTML=doc.compactMd+`<div style="margin-top:18px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:12.5px;color:var(--green)">✓ 已剔除页眉页脚与重复内容，并还原为标准 Markdown</div>`;
+  }
+}
+
+function currentPayload(){
+  if(outputMode==='full')return currentDoc.raw;
+  if(outputMode==='chunk')return currentDoc.chunks.map(c=>c.title+'\n'+c.text).join('\n\n');
+  return currentDoc.compactText;
+}
+
+function updateTokens(){
+  const raw=estimateTokens(currentDoc.raw);
+  const now=outputMode==='chunk'
+    ? Math.max(...currentDoc.chunks.map(c=>estimateTokens(c.text)))
+    : estimateTokens(outputMode==='full'?currentDoc.raw:currentDoc.compactText);
+  const saved=Math.max(0,Math.round((1-now/raw)*100));
+  $('#tokenMeter').hidden=false;
+  $('#tkRaw').textContent=raw.toLocaleString()+' tokens';
+  $('#tkNow').textContent=outputMode==='chunk'?( '单次约 '+now.toLocaleString()+' tokens'):(now.toLocaleString()+' tokens');
+  $('#tkSave').textContent=outputMode==='full'?'未精简':('↓ 节省约 '+saved+'%');
+}
+
+function showView(v){
+  viewMode=v;
+  $$('#viewTabs button').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  const showChunk=outputMode==='chunk' && v==='md';
+  views.md.style.display=(!showChunk && v==='md')?'block':'none';
+  views.json.style.display=v==='json'?'block':'none';
+  views.trace.style.display=v==='trace'?'block':'none';
+  views.chunk.style.display=showChunk?'flex':'none';
+}
+
+function renderAll(){
+  renderMd(currentDoc);
+  renderJson(currentDoc);
+  renderChunks(currentDoc);
+  renderTrace(currentDoc);
+  bindTraceJson();
+  updateTokens();
+}
+
+function resetPG(){
+  clearTimeout(pgTimer);parsed=false;
+  stageEls.forEach(s=>{s.classList.remove('running','done');s.querySelector('.s-state').textContent='待运行'});
+  logEl.innerHTML='<span class="dim">// 运行日志将在此输出</span>';
+  $('#pgEmpty').style.display='grid';
+  Object.values(views).forEach(el=>el.style.display='none');
+  $('#pgStatus').textContent='等待解析…';
+  $('#tokenMeter').hidden=true;
+  runBtn.disabled=false;runBtn.textContent='▶ 开始解析';
+}
+
+function setDoc(key,doc,btn){
+  currentKey=key;currentDoc=doc;
+  $('#filePillName').textContent=doc.name;
+  $('#filePillMeta').textContent=doc.meta;
+  const ico=$('.file-pill .pdfico');
+  if(ico)ico.textContent=doc.ext;
+  $$('#sampleBar .sample-btn').forEach(b=>b.classList.toggle('active',b.dataset.doc===key));
+  resetPG();
+}
+
+$$('#sampleBar .sample-btn').forEach(b=>b.addEventListener('click',()=>setDoc(b.dataset.doc,DOCS[b.dataset.doc],b)));
+$('#pgFile')?.addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  setDoc('upload',makeUploadDoc(f));
+  toast('已选择 '+f.name+'，文件不会上传');
+  e.target.value='';
+});
+
+$$('#modeTabs button').forEach(b=>b.addEventListener('click',()=>{
+  outputMode=b.dataset.mode;
+  $$('#modeTabs button').forEach(x=>x.classList.toggle('active',x===b));
+  if(!parsed)return;
+  renderMd(currentDoc);updateTokens();
+  showView(outputMode==='chunk'?'md':viewMode);
+}));
+$$('#viewTabs button').forEach(b=>b.addEventListener('click',()=>{if(parsed)showView(b.dataset.view)}));
+
+function copyText(text){
+  navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板')).catch(()=>toast('复制失败，请手动选择'));
+}
+$('#copyOut')?.addEventListener('click',()=>{
+  if(!parsed){toast('请先完成解析');return}
+  if(viewMode==='json')copyText(JSON.stringify(currentDoc.json,null,2));
+  else copyText(currentPayload());
+});
+$('#dlOut')?.addEventListener('click',()=>{
+  if(!parsed){toast('请先完成解析');return}
+  const isJson=viewMode==='json';
+  const blob=new Blob([isJson?JSON.stringify({...currentDoc.json,token_usage:{raw:estimateTokens(currentDoc.raw),compact:estimateTokens(currentDoc.compactText)}},null,2):currentPayload()],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=currentDoc.name.replace(/\.[^.]+$/,'')+(isJson?'.json':outputMode==='chunk'?'.chunks.md':'.md');
+  a.click();URL.revokeObjectURL(a.href);
+  toast('已开始下载');
+});
+
+resetBtn.addEventListener('click',resetPG);
+
+function runParse(){
+  if(parsed){resetPG()}
+  runBtn.disabled=true;
+  Object.values(views).forEach(el=>el.style.display='none');
+  $('#pgEmpty').style.display='grid';
+  let i=0;
+  const logs=currentDoc.logs;
+  const runStage=()=>{
+    if(i>=logs.length){finish();return}
+    const s=stageEls[i];
+    s.classList.add('running');s.querySelector('.s-state').textContent='运行中';
+    logs[i].forEach((l,j)=>{
+      pgTimer=setTimeout(()=>{
+        logEl.innerHTML+=`<div><span class="dim">[${String(i+1).padStart(2,'0')}]</span> ${escapeHtml(l)}</div>`;
+        logEl.scrollTop=logEl.scrollHeight;
+      },j*380);
+    });
+    pgTimer=setTimeout(()=>{
+      s.classList.remove('running');s.classList.add('done');
+      s.querySelector('.s-state').textContent='完成 ✓';
+      i++;runStage();
+    },380*logs[i].length+420);
+  };
+  runStage();
+  function finish(){
+    parsed=true;
+    $('#pgEmpty').style.display='none';
+    $('#pgStatus').textContent='✓ 解析完成 · 演示结果 · '+currentDoc.meta.replace('· ','');
+    renderAll();
+    showView(outputMode==='chunk'?'md':'md');
+    runBtn.disabled=false;runBtn.textContent='↻ 重新解析';
+  }
+}
+runBtn.addEventListener('click',runParse);
+Object.values(views).forEach(el=>el.style.display='none');
+
+/* nav active includes new sections */
+const secIds=['pipeline','engines','multimodal','arch','console','bench','tokens','playground','extract','scenarios','cases','api','faq'];
+const nio=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){
+    const href='#'+e.target.id;
+    $$('#navLinks a, #mobileDrawer a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')===href));
+  }
+}),{rootMargin:'-40% 0px -55% 0px'});
+secIds.forEach(id=>{const el=document.getElementById(id);if(el)nio.observe(el)});
+
+
+/* ================= Enterprise console ================= */
+(function(){
+  if(!$('#panel-tasks'))return;
+
+  const badgeClass={
+    '排队中':'badge-wait','进行中':'badge-run','成功':'badge-ok',
+    '失败':'badge-fail','已中止':'badge-stop'
+  };
+  let tasks=[
+    {id:'task_8a12c3',type:'单文件',file:'供应商报价单_V3.xlsx',via:'同步',pri:'高',status:'成功',cost:'10s',owner:'admin',log:['上传完成','表格还原 3 行明细','输出 markdown / json']},
+    {id:'task_91bef0',type:'单文件',file:'年度报告_节选.pdf',via:'异步',pri:'高',status:'失败',cost:'15s',owner:'admin',log:['版面分析完成','OCR 超时（演示失败）']},
+    {id:'task_b3301e',type:'批量',file:'历史技术档案_批次07（128 份）',via:'异步',pri:'中',status:'进行中',cost:'—',owner:'scan',log:['已完成 86/128','当前：工艺卡_004.pdf']},
+    {id:'task_c2aa77',type:'批量',file:'合同扫描件_Q4（64 份）',via:'异步',pri:'高',status:'成功',cost:'4m12s',owner:'legal',log:['全部成功','已推送到知识库 webhook']},
+    {id:'task_d11890',type:'单文件',file:'设备维修手册_CH2.pdf',via:'异步',pri:'中',status:'成功',cost:'18s',owner:'service',log:['双栏阅读顺序还原','精简后约节省 50% token']},
+    {id:'task_e45c02',type:'单文件',file:'财务报表示意.xlsx',via:'同步',pri:'高',status:'排队中',cost:'—',owner:'finance',log:['等待调度']},
+    {id:'task_f09ab1',type:'批量',file:'质检报告_扫描件（36 份）',via:'异步',pri:'低',status:'已中止',cost:'—',owner:'qa',log:['用户中止']},
+    {id:'task_112c8d',type:'单文件',file:'工程图纸_DWG618.pdf',via:'同步',pri:'高',status:'成功',cost:'9s',owner:'pe',log:['标题栏已抽取','明细表 4 行']}
+  ];
+  let selected=null;
+
+  const count=s=>tasks.filter(t=>s==='批量'?t.type==='批量':t.status===s).length;
+  function kpis(){
+    $('#taskKpis').innerHTML=[
+      ['排队中',count('排队中'),''],
+      ['进行中',count('进行中'),'run'],
+      ['成功',count('成功'),'ok'],
+      ['失败',count('失败'),'bad'],
+      ['已中止',count('已中止'),''],
+      ['批量任务',count('批量'),'warn']
+    ].map(([k,v,c])=>`<div class="kpi ${c}"><b>${v}</b><span>${k}</span></div>`).join('');
+  }
+  function filtered(){
+    const q=($('#taskQ').value||'').trim().toLowerCase();
+    const st=$('#taskFilter').value, ty=$('#taskType').value;
+    return tasks.filter(t=>{
+      if(st==='批量' && t.type!=='批量')return false;
+      if(st!=='all' && st!=='批量' && t.status!==st)return false;
+      if(ty!=='all' && t.type!==ty)return false;
+      if(q && !(t.id+' '+t.file).toLowerCase().includes(q))return false;
+      return true;
+    });
+  }
+  function showDetail(id){
+    selected=id;
+    const t=tasks.find(x=>x.id===id);
+    const box=$('#taskDetail');
+    if(!t){box.classList.remove('open');return;}
+    box.classList.add('open');
+    box.innerHTML=`<h4>${escapeHtml(t.file)} <span class="badge ${badgeClass[t.status]}">${t.status}</span></h4>
+      <p style="font-size:13px;color:var(--ink-3);margin-bottom:8px">${t.id} · ${t.type} · ${t.via} · 优先级 ${t.pri} · 负责人 ${escapeHtml(t.owner)}</p>
+      <div class="mini-log">${t.log.map(l=>`<div>${escapeHtml(l)}</div>`).join('')}</div>
+      <div class="pg-actions" style="margin-top:10px">
+        ${t.status==='失败'?`<button type="button" class="btn btn-primary" data-retry="${t.id}" style="padding:6px 12px;font-size:12.5px">重试任务</button>`:''}
+        ${t.status==='成功'?`<button type="button" class="btn btn-ghost" data-dl-task="${t.id}" style="padding:6px 12px;font-size:12.5px">下载结果</button>`:''}
+        ${t.status==='进行中'||t.status==='排队中'?`<button type="button" class="btn btn-ghost" data-abort="${t.id}" style="padding:6px 12px;font-size:12.5px">中止</button>`:''}
+      </div>`;
+  }
+  function renderTasks(){
+    kpis();
+    const rows=filtered();
+    const body=$('#taskBody');
+    if(!rows.length){
+      body.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--ink-3)">没有符合条件的任务</td></tr>';
+    }else{
+      body.innerHTML=rows.map(t=>`<tr data-id="${t.id}" class="${selected===t.id?'selected':''}">
+        <td>${t.id}</td><td>${t.type}</td><td>${escapeHtml(t.file)}</td><td>${t.via}</td><td>${t.pri}</td>
+        <td><span class="badge ${badgeClass[t.status]}">${t.status}</span></td>
+        <td>${t.cost}</td>
+        <td>${t.status==='失败'
+          ? `<button type="button" class="linkish" data-retry="${t.id}">重试</button>`
+          : `<button type="button" class="linkish" data-open-task="${t.id}">查看</button>`}</td>
+      </tr>`).join('');
+    }
+    if(selected) showDetail(selected);
+    else $('#taskDetail').classList.remove('open');
+  }
+
+  $('#taskBody').addEventListener('click',e=>{
+    const retry=e.target.closest('[data-retry]');
+    if(retry){e.stopPropagation();retryTask(retry.dataset.retry);return;}
+    const open=e.target.closest('[data-open-task]');
+    const tr=e.target.closest('tr[data-id]');
+    const id=(open&&open.dataset.openTask)||(tr&&tr.dataset.id);
+    if(id)showDetail(id),renderTasks();
+  });
+  $('#taskDetail').addEventListener('click',e=>{
+    const r=e.target.closest('[data-retry]'); if(r){retryTask(r.dataset.retry);return;}
+    const a=e.target.closest('[data-abort]'); if(a){abortTask(a.dataset.abort);return;}
+    const d=e.target.closest('[data-dl-task]'); if(d){downloadTask(d.dataset.dlTask);return;}
+  });
+  $('#taskQ').addEventListener('input',renderTasks);
+  $('#taskFilter').addEventListener('change',renderTasks);
+  $('#taskType').addEventListener('change',renderTasks);
+
+  function retryTask(id){
+    const t=tasks.find(x=>x.id===id); if(!t)return;
+    t.status='排队中'; t.cost='—'; t.log=[...t.log,'已重新入队（演示）'];
+    renderTasks(); showDetail(id);
+    toast('任务已重新排队');
+    setTimeout(()=>{t.status='进行中';t.log.push('开始重新解析');renderTasks();showDetail(id);},600);
+    setTimeout(()=>{t.status='成功';t.cost='8s';t.log.push('重试成功，结果可下载');renderTasks();showDetail(id);toast('重试完成');},1600);
+  }
+  function abortTask(id){
+    const t=tasks.find(x=>x.id===id); if(!t)return;
+    t.status='已中止'; t.log.push('用户中止（演示）'); renderTasks(); showDetail(id); toast('任务已中止');
+  }
+  function downloadTask(id){
+    const t=tasks.find(x=>x.id===id); if(!t)return;
+    const blob=new Blob([`# ${t.file}\n\n演示结果包\n任务 ${t.id} 状态 ${t.status}\n\n`+t.log.join('\n')],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=t.id+'_result.md'; a.click(); URL.revokeObjectURL(a.href);
+    toast('已下载示意结果');
+  }
+
+  $('#newTaskBtn').addEventListener('click',()=>{
+    const id='task_'+Math.random().toString(16).slice(2,8);
+    tasks.unshift({id,type:'单文件',file:'新建演示文档.pdf',via:'异步',pri:'中',status:'排队中',cost:'—',owner:'you',log:['已创建任务（本地演示）']});
+    selected=id; renderTasks(); showDetail(id); toast('已创建演示任务');
+    setTimeout(()=>{const t=tasks.find(x=>x.id===id); if(!t||t.status!=='排队中')return; t.status='进行中'; t.log.push('开始解析'); renderTasks(); showDetail(id);},700);
+    setTimeout(()=>{const t=tasks.find(x=>x.id===id); if(!t||t.status!=='进行中')return; t.status='成功'; t.cost='6s'; t.log.push('解析完成'); renderTasks(); showDetail(id);},1700);
+  });
+
+  /* panels */
+  $$('.console-side button[data-panel]').forEach(b=>b.addEventListener('click',()=>{
+    $$('.console-side button[data-panel]').forEach(x=>x.classList.toggle('active',x===b));
+    ['tasks','ops','integ','apps'].forEach(id=>{
+      const el=$('#panel-'+id); if(el)el.hidden=id!==b.dataset.panel;
+    });
+    if(b.dataset.panel==='ops')drawOps();
+  }));
+
+  /* ops charts */
+  function drawOps(){
+    const bars=$('#opsBars');
+    const vals=[42,38,55,48,33,61,58,44,39,51,47,43];
+    const max=Math.max(...vals);
+    let html='';
+    vals.forEach((v,i)=>{
+      const h=Math.round(v/max*100);
+      const x=20+i*28, y=120-h, w=18;
+      html+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${i===vals.length-1?'#2563eb':'#93c5fd'}"/>`;
+    });
+    html+='<text x="8" y="14" font-size="10" fill="#64748b">页/分钟</text>';
+    bars.innerHTML=html;
+
+    const lines=$('#opsLines');
+    const p50=[10,12,11,13,12,14,12,11,12,13,12,12];
+    const p95=[32,36,34,40,38,42,37,35,38,41,39,38];
+    const p99=[70,78,74,88,82,90,80,76,86,89,84,86];
+    const map=(arr,color)=>{
+      const pts=arr.map((v,i)=>{
+        const x=20+i*28, y=120-v;
+        return x+','+y;
+      }).join(' ');
+      return `<polyline fill="none" stroke="${color}" stroke-width="2" points="${pts}"/>`;
+    };
+    lines.innerHTML=map(p99,'#fdba74')+map(p95,'#34d399')+map(p50,'#2563eb')+
+      '<text x="220" y="14" font-size="10" fill="#2563eb">P50</text><text x="260" y="14" font-size="10" fill="#059669">P95</text><text x="300" y="14" font-size="10" fill="#c2410c">P99</text>';
+  }
+
+  /* integrations */
+  const integs=[
+    {id:'oa',name:'OA 系统',type:'业务系统',owner:'张三',status:'启用',note:'公文与合同归档',key:'sk-live-oa-••••8f2a',hook:'https://oa.example.com/hooks/parsed',qps:'20'},
+    {id:'kb',name:'知识库',type:'AI 系统',owner:'李四',status:'启用',note:'RAG 入库',key:'sk-live-kb-••••1c90',hook:'https://kb.example.com/ingest',qps:'50'},
+    {id:'agent',name:'企业 Agent',type:'AI 系统',owner:'王五',status:'启用',note:'一线问答',key:'sk-live-ag-••••77b1',hook:'https://agent.example.com/docs',qps:'30'},
+    {id:'docflow',name:'DocFlow',type:'业务系统',owner:'赵六',status:'停用',note:'可选',key:'sk-live-df-••••00ee',hook:'',qps:'10'}
+  ];
+  let curInteg=integs[0], itab='base';
+  function renderIntegList(){
+    $('#integList').innerHTML=integs.map(s=>`<button type="button" class="${s.id===curInteg.id?'active':''}" data-integ="${s.id}">${s.name}<div style="font-weight:400;font-size:11px;color:var(--ink-3)">${s.status} · ${s.type}</div></button>`).join('');
+  }
+  function renderIntegForm(){
+    const s=curInteg;
+    const panes={
+      base:`<div class="kv">
+        <label>系统名称</label><input id="igName" value="${escapeHtml(s.name)}">
+        <label>系统类型</label><select id="igType"><option${s.type==='业务系统'?' selected':''}>业务系统</option><option${s.type==='AI 系统'?' selected':''}>AI 系统</option></select>
+        <label>状态</label><select id="igStatus"><option${s.status==='启用'?' selected':''}>启用</option><option${s.status==='停用'?' selected':''}>停用</option></select>
+        <label>负责人</label><input id="igOwner" value="${escapeHtml(s.owner)}">
+        <label>备注</label><input id="igNote" value="${escapeHtml(s.note)}">
+      </div>`,
+      auth:`<div class="kv">
+        <label>App Key</label><input id="igKey" value="${escapeHtml(s.key)}" readonly>
+        <label>权限范围</label><input value="parse,chunk,callback" readonly>
+        <label>调用追溯</label><input value="已开启 · 按请求记录" readonly>
+      </div><p style="margin-top:10px;font-size:12.5px;color:var(--ink-3)">演示密钥已脱敏，正式环境可在权限体系中轮换。</p>`,
+      hook:`<div class="kv">
+        <label>Webhook</label><input id="igHook" value="${escapeHtml(s.hook)}" placeholder="https://">
+        <label>事件</label><input value="task.succeeded, task.failed" readonly>
+        <label>重试策略</label><input value="失败重试 3 次，指数退避" readonly>
+      </div>`,
+      limit:`<div class="kv">
+        <label>每秒限流 QPS</label><input id="igQps" type="number" min="1" value="${escapeHtml(s.qps)}">
+        <label>优先级</label><select><option>高</option><option selected>中</option><option>低</option></select>
+        <label>并发上限</label><input value="8" readonly>
+      </div>`
+    };
+    $('#integForm').innerHTML=panes[itab];
+  }
+  function renderInteg(){renderIntegList();renderIntegForm();}
+  $('#integList').addEventListener('click',e=>{
+    const b=e.target.closest('[data-integ]'); if(!b)return;
+    curInteg=integs.find(s=>s.id===b.dataset.integ); renderInteg();
+  });
+  $$('.integ-tabs button').forEach(b=>b.addEventListener('click',()=>{
+    itab=b.dataset.itab;
+    $$('.integ-tabs button').forEach(x=>x.classList.toggle('active',x===b));
+    renderIntegForm();
+  }));
+  $('#saveInteg').addEventListener('click',()=>{
+    const name=$('#igName'), hook=$('#igHook'), qps=$('#igQps'), owner=$('#igOwner'), note=$('#igNote'), type=$('#igType'), status=$('#igStatus');
+    if(name)curInteg.name=name.value.trim()||curInteg.name;
+    if(owner)curInteg.owner=owner.value;
+    if(note)curInteg.note=note.value;
+    if(type)curInteg.type=type.value;
+    if(status)curInteg.status=status.value;
+    if(hook)curInteg.hook=hook.value;
+    if(qps)curInteg.qps=qps.value;
+    renderInteg(); toast('配置已保存在本地演示中');
+  });
+  $('#newIntegBtn').addEventListener('click',()=>{
+    const s={id:'sys_'+Math.random().toString(16).slice(2,6),name:'新接入系统',type:'业务系统',owner:'you',status:'停用',note:'待配置',key:'sk-demo-••••'+Math.random().toString(16).slice(2,6),hook:'',qps:'10'};
+    integs.push(s); curInteg=s; itab='base'; $$('.integ-tabs button').forEach(x=>x.classList.toggle('active',x.dataset.itab==='base')); renderInteg(); toast('已添加接入（演示）');
+  });
+
+  /* app center */
+  const appPanel=$('#appPanel');
+  function openApp(kind){
+    appPanel.classList.add('open');
+    if(kind==='convert'){
+      appPanel.innerHTML=`<h4 style="margin-bottom:10px">格式转换</h4>
+        <div class="conv-row">
+          <label>源格式<select id="cvFrom"><option>PDF</option><option>扫描件</option><option>图片</option><option>Word</option><option>Excel</option></select></label>
+          <label>目标格式<select id="cvTo"><option>Word</option><option>Excel</option><option>PDF</option><option>图片</option><option>Markdown</option></select></label>
+          <button type="button" class="btn btn-primary" id="cvRun" style="padding:8px 14px">开始转换</button>
+        </div>
+        <div class="conv-preview" id="cvOut">选择格式后点击「开始转换」。演示会生成可下载的示意文件，不读取真实文档内容。</div>`;
+      $('#cvRun').addEventListener('click',()=>{
+        const from=$('#cvFrom').value, to=$('#cvTo').value;
+        $('#cvOut').textContent=`已将「年度报告_节选.${from}」转换为 ${to}（演示）\n- 保留标题层级与表格\n- 扫描件已做纠偏与切边\n- 可下载示意结果`;
+        const blob=new Blob([`ParseOne 格式转换演示\n${from} → ${to}\n保留标题、表格与页码来源。`],{type:'text/plain;charset=utf-8'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='convert_demo.'+(to==='Excel'?'csv':to==='Markdown'?'md':'txt'); a.click(); URL.revokeObjectURL(a.href);
+        toast('转换完成，已下载示意文件');
+      });
+    }else if(kind==='translate'){
+      appPanel.innerHTML=`<h4 style="margin-bottom:10px">文档翻译</h4>
+        <div class="conv-row">
+          <label>源语言<select id="trFrom"><option>中文</option><option>英语</option><option>德语</option></select></label>
+          <label>目标语言<select id="trTo"><option>英语</option><option>中文</option><option>德语</option><option>日语</option></select></label>
+          <button type="button" class="btn btn-primary" id="trRun" style="padding:8px 14px">开始翻译</button>
+        </div>
+        <div class="conv-preview" id="trSrc">若开机无显示，请先检查电源开关与保险丝 F1。不要拆开高压仓。</div>
+        <div class="conv-preview" id="trOut" style="margin-top:8px;display:none"></div>`;
+      const dict={
+        '英语':'If the panel does not light up, first check the power switch and fuse F1. Do not open the high-voltage compartment.',
+        '德语':'Wenn die Anzeige nicht leuchtet, zuerst Netzschalter und Sicherung F1 prüfen. Den Hochspannungsraum nicht öffnen.',
+        '日语':'電源が入らない場合は、まず電源スイッチとヒューズ F1 を確認してください。高圧区画は開けないでください。',
+        '中文':'若开机无显示，请先检查电源开关与保险丝 F1。不要拆开高压仓。'
+      };
+      $('#trRun').addEventListener('click',()=>{
+        const to=$('#trTo').value;
+        $('#trOut').style.display='block';
+        $('#trOut').textContent=`${to}（保留步骤编号与零件号 F1）\n`+(dict[to]||dict['英语']);
+        toast('翻译完成（演示）');
+      });
+    }else{
+      appPanel.innerHTML=`<h4 style="margin-bottom:10px">知识库智能切分</h4>
+        <div class="conv-row">
+          <label>切分策略<select id="ckHow"><option value="heading">按标题层级</option><option value="chapter">按章节</option><option value="token">按 token 预算（512）</option></select></label>
+          <button type="button" class="btn btn-primary" id="ckRun" style="padding:8px 14px">生成切片</button>
+        </div>
+        <div id="ckOut"></div>`;
+      $('#ckRun').addEventListener('click',()=>{
+        const how=$('#ckHow').value;
+        const chunks=how==='chapter'?[
+          ['第 2.4 章 故障排查','约 180 tokens','页 12–13'],
+          ['第 4 章 增益校准','约 210 tokens','页 28–30']
+        ]:how==='token'?[
+          ['切片 1','512 tokens 预算 · 实际 168','页 12'],
+          ['切片 2','512 tokens 预算 · 实际 154','页 13'],
+          ['切片 3','512 tokens 预算 · 实际 132','页 13–14']
+        ]:[
+          ['2.4 常见故障排查','约 90 tokens','页 12'],
+          ['2.4.1 电源单元','约 120 tokens','页 12'],
+          ['2.4.2 功放保护','约 110 tokens','页 13']
+        ];
+        $('#ckOut').innerHTML=chunks.map(c=>`<div class="chunk-card"><header><b>${c[0]}</b><span>${c[1]} · ${c[2]}</span></header></div>`).join('');
+        toast('切片已生成（演示）');
+      });
+    }
+    appPanel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
+  }
+  $$('[data-app]').forEach(b=>b.addEventListener('click',()=>openApp(b.dataset.app)));
+
+  renderTasks();
+  renderInteg();
+  drawOps();
+})();
+
+/* ================= Smart extract ================= */
+(function(){
+  if(!$('#exDoc'))return;
+  const SETS={
+    quote:{
+      text:'供应商报价单 V3。项目编号 RFQ-2026-118，供应商南方工装有限公司。夹具底座 20×860.00，定位销 80×12.50，压板组件 40×145.00。含税合计 26,200.00 元。图纸 DWG-618，交期 15 天，报价有效期 30 天。',
+      fields:[
+        {k:'project_id',l:'项目编号',v:'RFQ-2026-118',span:'RFQ-2026-118'},
+        {k:'vendor',l:'供应商',v:'南方工装有限公司',span:'南方工装有限公司'},
+        {k:'amount',l:'含税合计',v:'26200.00',span:'26,200.00'},
+        {k:'drawing',l:'图纸编号',v:'DWG-618',span:'DWG-618'},
+        {k:'lead_time',l:'交期',v:'15天',span:'15 天'},
+        {k:'valid_days',l:'有效期',v:'30天',span:'30 天'}
+      ]
+    },
+    contract:{
+      text:'采购合同。买方：广州弘扬。卖方：南方工装有限公司。标的：夹具底座及配件，总价人民币 26,200.00 元。交货地点：买方仓库。付款：预付 30%，验收后付清。质保期 12 个月。争议提交广州仲裁。',
+      fields:[
+        {k:'buyer',l:'买方',v:'广州弘扬',span:'广州弘扬'},
+        {k:'seller',l:'卖方',v:'南方工装有限公司',span:'南方工装有限公司'},
+        {k:'amount',l:'合同总价',v:'26200.00',span:'26,200.00'},
+        {k:'payment',l:'付款条款',v:'预付30%，验收后付清',span:'预付 30%，验收后付清'},
+        {k:'warranty',l:'质保期',v:'12个月',span:'12 个月'},
+        {k:'dispute',l:'争议解决',v:'广州仲裁',span:'广州仲裁'}
+      ]
+    },
+    drawing:{
+      text:'装配图标题栏。图号 DWG-618-A，材料 45#钢，比例 1:2，重量 12.6 kg，设计：刘工，审核：陈工，日期 2026-09-18。明细 03：定位销 φ8×H12 × 4。',
+      fields:[
+        {k:'dwg_no',l:'图号',v:'DWG-618-A',span:'DWG-618-A'},
+        {k:'material',l:'材料',v:'45#钢',span:'45#钢'},
+        {k:'scale',l:'比例',v:'1:2',span:'1:2'},
+        {k:'weight',l:'重量',v:'12.6kg',span:'12.6 kg'},
+        {k:'designer',l:'设计',v:'刘工',span:'刘工'},
+        {k:'part',l:'明细03',v:'定位销 φ8×H12 × 4',span:'定位销 φ8×H12 × 4'}
+      ]
+    }
+  };
+  function fieldsUI(){
+    const set=SETS[$('#exDoc').value];
+    $('#exFields').innerHTML=set.fields.map(f=>`<label><input type="checkbox" checked data-k="${f.k}"> ${f.l}</label>`).join('');
+    $('#exSrc').textContent=set.text;
+    $('#exOut').textContent='// 勾选字段后点击「开始抽取」';
+  }
+  function run(){
+    const set=SETS[$('#exDoc').value];
+    const keys=[...$$('#exFields input:checked')].map(i=>i.dataset.k);
+    const picked=set.fields.filter(f=>keys.includes(f.k));
+    let html=escapeHtml(set.text);
+    picked.forEach(f=>{html=html.replace(f.span,`<mark>${escapeHtml(f.span)}</mark>`)});
+    $('#exSrc').innerHTML=html;
+    const obj={document_type:$('#exDoc').value,fields:{}};
+    picked.forEach(f=>{obj.fields[f.k]={label:f.l,value:f.v}});
+    obj.token_saved='抽取结果远小于原文，便于送入审核或模型';
+    $('#exOut').textContent=JSON.stringify(obj,null,2);
+    toast(picked.length?'抽取完成':'请先勾选字段');
+  }
+  $('#exDoc').addEventListener('change',fieldsUI);
+  $('#exRun').addEventListener('click',run);
+  fieldsUI();
+})();
+
+</script>
+</body>
+</html>
